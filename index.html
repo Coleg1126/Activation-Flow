@@ -13,6 +13,7 @@
     h1 { font-size: 18px; margin: 0 0 10px; }
     h2 { font-size: 14px; margin: 0 0 10px; color:#b9c7d8; }
     .row { display:flex; gap:10px; flex-wrap: wrap; align-items: center; }
+
     button, select, input, textarea {
       background:#0f1722; color:#e8eef6; border:1px solid #273549;
       border-radius: 12px; padding: 12px 14px; font-size: 15px;
@@ -22,6 +23,7 @@
     button.danger { background:#5a1d1d; border-color:#7a2b2b; }
     button.ghost { background:transparent; }
     button:disabled { opacity: .45; cursor:not-allowed; }
+
     .pill { display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; border:1px solid #273549; background:#0f1722; color:#b9c7d8; }
     .muted { color:#9fb0c6; }
     .divider { height:1px; background:#1e2a3a; margin: 12px 0; }
@@ -29,7 +31,35 @@
     .menu.open { display:block; }
     .menu button { width:100%; text-align:left; margin-bottom: 8px; }
     .status { font-size: 12px; color:#9fb0c6; }
-    .big { font-size: 15px; line-height: 1.5; white-space: pre-wrap; }
+
+    /* BIG message area */
+    .bigWrap{
+      border: 1px solid #273549;
+      background: #0f1722;
+      border-radius: 14px;
+      padding: 14px;
+      min-height: 340px;              /* bigger */
+      display:flex;
+    }
+    .big {
+      font-size: 16px;                 /* slightly larger */
+      line-height: 1.55;
+      white-space: pre-wrap;
+      width: 100%;
+      overflow:auto;
+    }
+
+    /* Highlight animation when message changes */
+    .flash {
+      animation: flash 900ms ease-out;
+    }
+    @keyframes flash {
+      0%   { box-shadow: 0 0 0 0 rgba(80,200,120,.0); transform: scale(1); }
+      15%  { box-shadow: 0 0 0 6px rgba(80,200,120,.18); }
+      35%  { box-shadow: 0 0 0 10px rgba(80,200,120,.12); }
+      100% { box-shadow: 0 0 0 0 rgba(80,200,120,0); transform: scale(1); }
+    }
+
     .alert { border: 1px solid #7a2b2b; background: rgba(122,43,43,.18); padding: 10px 12px; border-radius: 12px; }
     .ok { border: 1px solid #2b7a52; background: rgba(43,122,82,.16); padding: 10px 12px; border-radius: 12px; }
     .small { font-size: 12px; }
@@ -43,7 +73,7 @@
     .spinner { width: 26px; height: 26px; border-radius: 999px; border: 3px solid rgba(255,255,255,.18); border-top-color: rgba(255,255,255,.9); animation: spin .8s linear infinite; flex: 0 0 auto; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* CUSTOMER MODE (prefilled link): hide right panel, show CSID only */
+    /* CUSTOMER MODE: hide right panel, show CSID only */
     .csidOnlyWrap { display:none; }
     .customerMode .grid { grid-template-columns: 1fr; }
     .customerMode #rightCard { display:none; }
@@ -60,6 +90,7 @@
       .row { gap: 10px; }
       .row.compact { flex-direction: column; align-items: stretch; }
       .menu button { padding: 14px; }
+      .bigWrap { min-height: 420px; } /* even bigger on phone */
     }
   </style>
 </head>
@@ -89,14 +120,17 @@
       <!-- LEFT -->
       <div class="card">
         <h2>Message</h2>
-        <div id="botMessage" class="big"></div>
+
+        <!-- Bigger message container -->
+        <div class="bigWrap" id="bigWrap">
+          <div id="botMessage" class="big"></div>
+        </div>
 
         <!-- CSID-only display (visible in customer mode) -->
         <div class="csidOnlyWrap" id="csidOnlyWrap">
           <div class="divider"></div>
           <div class="row compact">
             <span class="pill">CSID: <strong id="csidOnlyText">—</strong></span>
-            <button id="copyCsidBtn">📋 Copy CSID</button>
           </div>
           <div class="muted small">If the monitoring station asks, share this CSID.</div>
         </div>
@@ -174,18 +208,21 @@
   </div>
 
   <script>
-    /**
-     * Updates in this version:
-     * - "Lost" no longer shows screen choices. It shows a step-specific "get back to it" guide.
-     * - After "I have an issue" troubleshooting, customer should tap DONE to return to the original step message.
-     * - "Need help from a person" now shows: To chat with a representative, text (385) 425-0752
-     */
-
-    const STORAGE_KEY = "vivint_activation_flow_customer_v5";
+    const STORAGE_KEY = "vivint_activation_flow_customer_v6";
     let isCustomerMode = false;
 
-    /** ====== Core flow model (starts at step_1) ====== */
     function stripDashes(code) { return (code || "").replace(/-/g, ""); }
+
+    /* --- Registration code formatting: show WITH dashes for readability --- */
+    function normalizeReg(code) {
+      return (code || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    }
+    function formatRegWithDashes(code) {
+      const raw = normalizeReg(code);
+      if (!raw) return "";
+      // group into 4s: ABCDEFGHIJKLLMNO -> ABCD-EFGH-IJKL-LMNO
+      return raw.match(/.{1,4}/g).join("-");
+    }
 
     const FLOW = {
       steps: [
@@ -214,12 +251,17 @@ When that’s done, tap Done.`,
           id: "step_2",
           name: "Register the panel",
           message: () => {
-            const rc = (state.registration_code || "{{registration_code}}");
+            const rcRaw = (state.registration_code || "{{registration_code}}");
+            const rcPretty = formatRegWithDashes(rcRaw) || rcRaw;
+
             return `Tap the 3 dots (bottom-right) → Software Version.
 When prompted, enter 2203.
-Tap “Register Panel” and enter this registration code WITHOUT dashes:
+Tap “Register Panel”.
 
-${stripDashes(rc)}
+Registration code (type it WITHOUT dashes):
+${rcPretty}
+
+(Example: you will type it as ${stripDashes(rcPretty)})
 
 When “Registering” goes away, tap Done.`;
           },
@@ -374,7 +416,6 @@ Or tap Done if you’re finished.`,
 
     /** ===== Lost guidance (step-specific) ===== */
     function homeReturnInstruction(panelType) {
-      // exactly as you specified
       if (panelType === "skycontrol") return "Tap the House/Home button at the bottom-right.";
       return "Tap the X inside of the shield in the bottom-left.";
     }
@@ -440,7 +481,6 @@ Then continue with the PIN steps, and tap Done here when finished.`;
 Then continue the Panic test and tap Done here when finished.`;
       }
 
-      // Step 6: keep it simple
       return `If you’re on the wrong screen:
 
 1) ${home}
@@ -458,10 +498,8 @@ Then continue and tap Done here when finished.`;
         registration_code: "",
         service_number: "",
         history: ["step_1"],
-        // Used to restore the step message after "Issue" or "Lost"
         return_step_id: "step_1",
         return_step_message: "",
-        // When true, DONE returns to the step message instead of advancing
         pending_return_to_step_on_done: false
       };
     }
@@ -471,6 +509,7 @@ Then continue and tap Done here when finished.`;
 
     /** ====== UI elements ====== */
     const botMessageEl = document.getElementById("botMessage");
+    const bigWrap = document.getElementById("bigWrap");
     const stepPill = document.getElementById("stepPill");
     const panelPill = document.getElementById("panelPill");
     const issuesMenuEl = document.getElementById("issuesMenu");
@@ -483,7 +522,6 @@ Then continue and tap Done here when finished.`;
     const overlay = document.getElementById("overlay");
 
     const csidOnlyText = document.getElementById("csidOnlyText");
-    const copyCsidBtn = document.getElementById("copyCsidBtn");
 
     const escalationTextEl = document.getElementById("escalationText");
     escalationTextEl.value = escalationDefault;
@@ -509,6 +547,20 @@ Then continue and tap Done here when finished.`;
       setTimeout(() => { try { fn(); } finally { setOverlay(false); } }, delayMs);
     }
 
+    function flashMessageBox() {
+      bigWrap.classList.remove("flash");
+      // force reflow to restart animation
+      void bigWrap.offsetWidth;
+      bigWrap.classList.add("flash");
+    }
+
+    function setBotMessage(text) {
+      botMessageEl.textContent = text;
+      flashMessageBox();
+      // Auto-scroll to top so new message is visible
+      bigWrap.scrollTop = 0;
+    }
+
     function interpolateStepMessage(step) {
       let msg = typeof step.message === "function" ? step.message() : step.message;
       msg = msg.replace(/\{\{csid\}\}/g, state.csid || "{{csid}}");
@@ -521,6 +573,7 @@ Then continue and tap Done here when finished.`;
       state.history.push(stepId);
       saveState();
       render();
+      flashMessageBox();
     }
 
     function goBackOneStep() {
@@ -529,6 +582,7 @@ Then continue and tap Done here when finished.`;
       state.current_step_id = state.history[state.history.length - 1];
       saveState();
       render();
+      flashMessageBox();
     }
 
     function escalate(reason) {
@@ -537,7 +591,7 @@ Then continue and tap Done here when finished.`;
       return esc;
     }
 
-    /** ====== Issue flow: show fix, then DONE returns to step message ====== */
+    /** ====== Issue/Lost flow: show temp message, then DONE returns to step ====== */
     function openTempMessageThenReturnOnDone(tempMessage) {
       const step = getStep(state.current_step_id);
       state.return_step_id = state.current_step_id;
@@ -545,7 +599,7 @@ Then continue and tap Done here when finished.`;
       state.pending_return_to_step_on_done = true;
       saveState();
 
-      botMessageEl.textContent = tempMessage;
+      setBotMessage(tempMessage);
       showInfo("After you try that, tap Done to return to the step.");
     }
 
@@ -560,7 +614,6 @@ Then continue and tap Done here when finished.`;
       openTempMessageThenReturnOnDone(response);
     }
 
-    /** ====== Lost button: step-specific generic return path ====== */
     function handleLost() {
       const txt = lostTextForStep(state.current_step_id);
       openTempMessageThenReturnOnDone(txt);
@@ -595,7 +648,6 @@ Then continue and tap Done here when finished.`;
       regInput.readOnly = true;
       serviceInput.readOnly = true;
 
-      // Customers always start at step_1
       state.current_step_id = "step_1";
       state.history = ["step_1"];
       saveState();
@@ -648,11 +700,9 @@ Then continue and tap Done here when finished.`;
 
       csidOnlyText.textContent = state.csid ? state.csid : "—";
 
-      // If we are not currently showing a temp message, ensure step message is visible.
-      // (If temp message is showing, we keep it until user taps Done.)
       if (!state.pending_return_to_step_on_done) {
         const msg = step ? interpolateStepMessage(step) : "Step not found.";
-        botMessageEl.textContent = msg;
+        setBotMessage(msg);
       }
 
       buildIssuesMenu(step);
@@ -688,25 +738,23 @@ Then continue and tap Done here when finished.`;
 
     /** ====== Button handlers ====== */
     document.getElementById("doneBtn").onclick = () => withLoading(() => {
-      // If we are returning from an Issue/Lost message, DONE returns to step message (no step advance)
       if (state.pending_return_to_step_on_done) {
         const step = getStep(state.return_step_id || state.current_step_id);
         const restore = state.return_step_message || (step ? interpolateStepMessage(step) : "");
         state.pending_return_to_step_on_done = false;
         saveState();
 
-        botMessageEl.textContent = restore || (step ? interpolateStepMessage(step) : botMessageEl.textContent);
+        setBotMessage(restore || (step ? interpolateStepMessage(step) : botMessageEl.textContent));
         showInfo("Back to the step. When you finish the step, tap Done again to continue.");
         return;
       }
 
-      // Normal DONE: advance to next step
       const idx = FLOW.steps.findIndex(s => s.id === state.current_step_id);
       if (idx < 0) { state.current_step_id = "step_1"; state.history = ["step_1"]; saveState(); render(); return; }
       const next = FLOW.steps[idx + 1];
       if (!next) { showInfo("All set — you’re finished."); return; }
       gotoStep(next.id);
-    }, 250);
+    }, 200);
 
     document.getElementById("issuesBtn").onclick = () => {
       const step = getStep(state.current_step_id);
@@ -720,11 +768,10 @@ Then continue and tap Done here when finished.`;
     }, 200);
 
     document.getElementById("escalateBtn").onclick = () => withLoading(() => {
-      // As requested: simple contact instruction
-      state.pending_return_to_step_on_done = false; // don't trap DONE
+      state.pending_return_to_step_on_done = false;
       saveState();
-      botMessageEl.textContent = "To chat with a representative, text (385) 425-0752)";
-      showAlert("If you already texted and need to keep going, you can continue with the steps above.");
+      setBotMessage("To chat with a representative, text (385) 425-0752)");
+      showAlert("If you already texted and want to keep going, continue with the steps above.");
     }, 200);
 
     document.getElementById("copyBtn").onclick = async () => {
@@ -744,7 +791,8 @@ Then continue and tap Done here when finished.`;
       state = defaultState();
       isCustomerMode = false;
       document.body.classList.remove("customerMode");
-      botMessageEl.textContent = interpolateStepMessage(getStep("step_1"));
+      state.pending_return_to_step_on_done = false;
+      saveState();
       render();
       showInfo("Reset complete.");
     }, 200);
@@ -753,11 +801,6 @@ Then continue and tap Done here when finished.`;
     csidInput.oninput = (e) => { state.csid = e.target.value.trim(); saveState(); render(); };
     regInput.oninput = (e) => { state.registration_code = e.target.value.trim(); saveState(); render(); };
     serviceInput.oninput = (e) => { state.service_number = e.target.value.trim(); saveState(); };
-
-    copyCsidBtn.onclick = async () => {
-      try { await navigator.clipboard.writeText(state.csid || ""); setStatus("CSID copied."); }
-      catch { setStatus("Copy failed (browser permissions)."); }
-    };
 
     makeLinkBtn.onclick = () => {
       const url = buildShareLinkFromState();
@@ -774,7 +817,6 @@ Then continue and tap Done here when finished.`;
     /** ====== Init ====== */
     const wasPrefilled = tryPrefillFromUrl();
 
-    // If NOT prefilled, ensure we still start at step_1
     if (!wasPrefilled) {
       if (!state.current_step_id || !getStep(state.current_step_id)) {
         state.current_step_id = "step_1";
@@ -783,7 +825,6 @@ Then continue and tap Done here when finished.`;
       }
     }
 
-    // Ensure initial message is step message
     state.pending_return_to_step_on_done = false;
     saveState();
     render();
