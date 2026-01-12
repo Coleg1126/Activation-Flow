@@ -53,7 +53,7 @@
     @media (max-width: 900px) {
       .wrap { padding: 12px; }
       .grid { grid-template-columns: 1fr; }
-      .row.actions button { width: 100%; }    /* big tap targets */
+      .row.actions button { width: 100%; }
       .row.topbar { align-items:flex-start; }
       button, select, input, textarea { width: 100%; box-sizing: border-box; }
       .pill { width: 100%; box-sizing: border-box; justify-content: space-between; }
@@ -106,7 +106,7 @@
         <div class="row actions">
           <button class="primary" id="doneBtn">✅ Done</button>
           <button id="issuesBtn">⚠️ I’m having an issue</button>
-          <button id="lostBtn">🧭 Take me to the right screen</button>
+          <button id="lostBtn">🧭 I can’t find that screen</button>
           <button class="danger" id="escalateBtn">🚨 I need help from a person</button>
         </div>
 
@@ -175,90 +175,18 @@
 
   <script>
     /**
-     * Changes requested:
-     * - Removed the "choose panel type" first step (step_0). Flow starts at step_1.
-     * - Better phone layout (single column + full-width buttons on small screens).
-     * - "Take me to the right screen" is now ONE button that ALWAYS routes:
-     *   1) Get to Home Screen first
-     *   2) Then go from Home → target screen for current step
-     * - Updated PIN step instructions to your exact wording.
+     * Updates in this version:
+     * - "Lost" no longer shows screen choices. It shows a step-specific "get back to it" guide.
+     * - After "I have an issue" troubleshooting, customer should tap DONE to return to the original step message.
+     * - "Need help from a person" now shows: To chat with a representative, text (385) 425-0752
      */
 
-    const STORAGE_KEY = "vivint_activation_flow_customer_v4";
+    const STORAGE_KEY = "vivint_activation_flow_customer_v5";
     let isCustomerMode = false;
 
-    /* =========================== SCREEN MAP =========================== */
-    const SCREEN_MAP = {"screens":[{"id":"home","name":"Home Screen","visible_elements":["Date, time, and weather in top-left","Message: 'Everything looks good. Your home is ready to arm.' OR 'System not ready to arm.'","Large white circle with shield saying Disarmed / Armed Stay / Armed Away","WiFi, power, and volume icons in top-right","Bottom bar: shield with X, temperature, camera icon (optional), lock icon (optional), plus/medical icon, three dots"],"navigation_to":"Tap the shield with X in the bottom-left. If you don’t see it, tap Back until it appears, then tap it.","navigation_from":"Tap 3 dots for menus, plus/medical for panic, or the large shield circle to arm/disarm.","used_in_steps":["step_1","step_5"]},{"id":"support","name":"Support Menu","visible_elements":["Left menu shows: Devices, Users, Security, General, Support","Support screen shows options like: Software Version, System Testing, Monitoring and Cellular, and other tools","Three dots menu was used to get here"],"navigation_to":"From Home Screen, tap the 3 dots (bottom-right).","navigation_from":"Tap Software Version for PIN prompt, tap Users from left menu, or tap back arrow to return.","used_in_steps":["step_1","step_2","step_3","step_4","step_6"]},{"id":"pin_for_access","name":"PIN Prompt (Software Version)","visible_elements":["Screen asks for a PIN to continue","Usually appears after tapping Software Version","Has keypad and entry field"],"navigation_to":"From Support Menu, tap Software Version.","navigation_from":"Enter 2203 to access Installer Toolbox (or proceed).","used_in_steps":["step_2","step_3"]},{"id":"installer_toolbox","name":"Installer Toolbox","visible_elements":["Menu with items such as Register panel, System testing, and other installer options","Top area may show Installer Toolbox title","Options listed in a simple menu format"],"navigation_to":"From PIN prompt, enter 2203.","navigation_from":"Tap Register panel for registration step, or System testing for Two-Way Voice Test.","used_in_steps":["step_2","step_3"]},{"id":"register_panel","name":"Register Panel Screen","visible_elements":["Option: Register panel","Field to enter registration code","May show status: Registering","May show error messages like DNS error, SIM status too old, etc."],"navigation_to":"From Installer Toolbox, tap Register panel.","navigation_from":"After registering completes, tap back to Installer Toolbox or exit to Home.","used_in_steps":["step_2"]},{"id":"system_testing","name":"System Testing Menu","visible_elements":["Menu shows testing options","Contains Two-Way Voice Test option","Scrollable list"],"navigation_to":"From Installer Toolbox, tap System testing.","navigation_from":"Scroll to Two-Way Voice Test and tap it.","used_in_steps":["step_3"]},{"id":"twoway_voice_current","name":"Two-Way Voice Test Screen (Ready)","visible_elements":["Shows Two-Way Voice Test option","May have status text like Ready or instructions","Important: You start test by tapping Two-Way Voice Test again (not Start Test)"],"navigation_to":"From System Testing menu, tap Two-Way Voice Test.","navigation_from":"Tap Two-Way Voice Test again to initiate call.","used_in_steps":["step_3"]},{"id":"two_way_call","name":"Two-Way Call In Progress","visible_elements":["Status: In Call or Waiting for status","May show 'Connecting to operator'","May show call timer or connection status"],"navigation_to":"From Two-Way Voice Test screen, tap Two-Way Voice Test again to start.","navigation_from":"Ends automatically or returns back; may require troubleshooting if stuck or kicks out.","used_in_steps":["step_3"]},{"id":"vivint_monitoring_station","name":"Monitoring Station Connected","visible_elements":["Operator voice comes through","May show connected status","May prompt for CSID"],"navigation_to":"Occurs automatically if Two-Way Voice Test connects successfully.","navigation_from":"After test ends, return to Two-Way Voice Test or System Testing menu.","used_in_steps":["step_3"]},{"id":"users","name":"Users Menu","visible_elements":["Left menu still visible","Users screen lists admins/users","Has Duress User option","Has Add new user at bottom"],"navigation_to":"From Support menu, tap Users in left menu.","navigation_from":"Tap Duress User or your name to edit PIN.","used_in_steps":["step_4","step_6"]},{"id":"duress_user","name":"Duress User Screen","visible_elements":["Shows Duress User settings","Toggle should be enabled","PIN shown as 2580"],"navigation_to":"From Users menu, tap Duress User.","navigation_from":"Tap back to return to Users list.","used_in_steps":["step_4"]},{"id":"customer_user","name":"Primary Admin User Details","visible_elements":["Shows user details","Has PIN section","Has phone/email fields for app invite"],"navigation_to":"From Users menu, tap your name (Primary Admin).","navigation_from":"Tap PIN to change, or enter phone/email to send invitation.","used_in_steps":["step_4","step_6"]},{"id":"pin_entry","name":"PIN Entry Screen","visible_elements":["Prompts to enter a 4-digit PIN","May show Updating user PIN","Has keypad"],"navigation_to":"From user details, tap PIN.","navigation_from":"After entry completes, returns to user details.","used_in_steps":["step_4"]},{"id":"panic_menu","name":"Panic Menu","visible_elements":["Opened by tapping plus/medical icon","Shows options like Panic","May show Medical/Fire (varies)"],"navigation_to":"From Home, tap the white plus/cross icon at bottom.","navigation_from":"Tap Panic and hold, or tap X to exit.","used_in_steps":["step_5"]},{"id":"panic_alarm","name":"Panic Alarm Triggered / Recent Alarms","visible_elements":["Alarm status may display","May require PIN to disarm","May show Recent Alarms screen"],"navigation_to":"From Panic menu, press and hold Panic for 2 seconds.","navigation_from":"Enter disarm code, then exit Recent Alarms by tapping X top-right.","used_in_steps":["step_5"]},{"id":"recent_alarms","name":"Recent Alarms Screen","visible_elements":["Title: Recent Alarms","List of alarm events","X button top-right to close"],"navigation_to":"After disarming Panic, it may show Recent Alarms automatically.","navigation_from":"Tap X (top-right) to return to Home.","used_in_steps":["step_5"]},{"id":"drag_to_arm","name":"Arming Slider Screen (Disarmed)","visible_elements":["Shows Disarmed status","Slider to arm Stay/Away","May show prompts for readiness"],"navigation_to":"From Home, tap the large circle that says Disarmed.","navigation_from":"Slide left to arm Stay; then disarm by dragging down and entering PIN.","used_in_steps":["step_5"]},{"id":"arming_countdown","name":"Arming Countdown","visible_elements":["Countdown timer while arming","Shows Stay/Away status","May show exit delay"],"navigation_to":"From Arming slider, slide to arm mode.","navigation_from":"After countdown ends, shows Armed Stay; disarm by dragging down.","used_in_steps":["step_5"]},{"id":"armed_stay","name":"Armed Stay Screen","visible_elements":["Shows Armed Stay","May show disarm option","Shield circle indicates armed"],"navigation_to":"Occurs after arming countdown completes.","navigation_from":"Drag down to disarm, enter PIN.","used_in_steps":["step_5"]},{"id":"disarm_drag","name":"Disarm Drag Prompt","visible_elements":["Prompt to drag down to disarm","PIN keypad appears after dragging","Disarm confirmation"],"navigation_to":"From Armed Stay, drag down to disarm.","navigation_from":"Enter PIN to return to Home (Disarmed).","used_in_steps":["step_5"]}]};
-
-    const SCREENS_BY_ID = Object.fromEntries((SCREEN_MAP.screens || []).map(s => [s.id, s]));
-
-    const SCREEN_EDGES = {
-      home: ["support", "panic_menu", "drag_to_arm"],
-      support: ["home", "pin_for_access", "installer_toolbox", "users"],
-      pin_for_access: ["support", "installer_toolbox"],
-      installer_toolbox: ["support", "register_panel", "system_testing"],
-      register_panel: ["installer_toolbox"],
-      system_testing: ["installer_toolbox", "twoway_voice_current"],
-      twoway_voice_current: ["system_testing", "two_way_call"],
-      two_way_call: ["twoway_voice_current", "vivint_monitoring_station"],
-      vivint_monitoring_station: ["two_way_call"],
-      users: ["support", "duress_user", "customer_user"],
-      duress_user: ["users"],
-      customer_user: ["users", "pin_entry"],
-      pin_entry: ["customer_user"],
-      panic_menu: ["home", "panic_alarm"],
-      panic_alarm: ["recent_alarms"],
-      recent_alarms: ["home"],
-      drag_to_arm: ["home", "arming_countdown"],
-      arming_countdown: ["armed_stay", "home"],
-      armed_stay: ["disarm_drag"],
-      disarm_drag: ["home"]
-    };
-
-    const EDGE_INSTRUCTIONS = {
-      "home->support": "From the Home Screen, tap the 3 dots (bottom-right).",
-      "support->pin_for_access": "Tap Software Version (this brings up the PIN screen).",
-      "pin_for_access->installer_toolbox": "Enter 2203 to open Installer Toolbox.",
-      "installer_toolbox->register_panel": "Tap Register Panel.",
-      "installer_toolbox->system_testing": "Tap System Testing.",
-      "system_testing->twoway_voice_current": "Scroll down and tap Two-Way Voice Test.",
-      "twoway_voice_current->two_way_call": "To start the test, tap Two-Way Voice Test one more time.",
-      "support->users": "On the left menu, tap Users.",
-      "users->duress_user": "Tap Duress User.",
-      "users->customer_user": "Tap your name (Primary Admin).",
-      "customer_user->pin_entry": "Tap the PIN row.",
-      "home->panic_menu": "Tap the white plus/cross icon along the bottom row.",
-      "panic_menu->panic_alarm": "Press and hold PANIC for 2 seconds.",
-      "panic_alarm->recent_alarms": "Disarm with a code, then you’ll see Recent Alarms.",
-      "home->drag_to_arm": "Tap the large circle that says Disarmed.",
-      "drag_to_arm->arming_countdown": "Slide left into Stay mode to arm.",
-      "arming_countdown->armed_stay": "Wait for the countdown to finish.",
-      "armed_stay->disarm_drag": "Drag down to disarm, then enter your PIN."
-    };
-
-    const STEP_TARGET_SCREEN = {
-      step_1: "home",
-      step_2: "installer_toolbox",
-      step_3: "system_testing",
-      step_4: "users",
-      step_5: "home",
-      step_6: "users"
-    };
-
-    function smartHubReboot2Min() {
-      return `Slide the panel straight up off the wall. Remove the battery from the back, wait 10 seconds, then put the battery back in and place the panel back on the wall. It should say “Your system is rebooting.” This usually takes about 2 minutes. Let me know when it finishes and you’re back on the main screen.`;
-    }
-    function skyControlReboot5to10() {
-      return `Tap the Home button (bottom-right) → tap the 3 dots → General → enter 2203 (or your code if you have one) → scroll down → tap Reboot. You should see “Connecting Services.” This reboot usually takes 5–10 minutes. Let me know when it finishes and you’re back on the main screen.`;
-    }
-    function rebootForPanel(panelType) { return (panelType === "skycontrol") ? skyControlReboot5to10() : smartHubReboot2Min(); }
-    function powerCycleForPanel(panelType) {
-      if (panelType === "skycontrol") return `Please do a reboot (do not slide the panel off the wall):\n\n${skyControlReboot5to10()}`;
-      return `Slide the panel straight up off the wall. Make sure the battery is fully seated on the back of the panel. Place the panel back on the wall and make sure it clicks into place.`;
-    }
+    /** ====== Core flow model (starts at step_1) ====== */
     function stripDashes(code) { return (code || "").replace(/-/g, ""); }
 
-    /** ====== Core flow model (starts at step_1 now) ====== */
     const FLOW = {
       steps: [
         {
@@ -273,14 +201,12 @@ When that’s done, tap Done.`,
             issues: [
               { id: "panel_not_on", label: "The panel is not on / screen is black" },
               { id: "panel_still_not_on_after_power", label: "Still not on after checking power" },
-              { id: "panel_off_after_breaker_ok", label: "Breaker is on, still off" },
               { id: "bad_date_time", label: "Date/time are not correct" }
             ]
           },
           intents: [
             { id: "panel_not_on", response: "Please check that the small white power box below the panel is plugged in, and that both wires are connected securely." },
             { id: "panel_still_not_on_after_power", response: () => powerCycleForPanel(state.panel_type) },
-            { id: "panel_off_after_breaker_ok", response: () => escalate("Power issue after breaker check") },
             { id: "bad_date_time", response: () => `Let’s reboot the panel:\n\n${rebootForPanel(state.panel_type)}` }
           ]
         },
@@ -304,7 +230,6 @@ When “Registering” goes away, tap Done.`;
               { id: "no_phone_number", label: "No phone number found" },
               { id: "vivint_services_no_response", label: "Vivint services did not respond" },
               { id: "code_2203_failed", label: "2203 didn’t work" },
-              { id: "code_2203_failed_after_service_number", label: "2203 still didn’t work (after service number)" },
               { id: "no_register_panel", label: "I don’t see “Register Panel”" }
             ]
           },
@@ -314,12 +239,7 @@ When “Registering” goes away, tap Done.`;
             { id: "no_phone_number", response: () => `Let’s reboot the panel:\n\n${rebootForPanel(state.panel_type)}` },
             { id: "vivint_services_no_response", response: () => `Let’s reboot the panel:\n\n${rebootForPanel(state.panel_type)}` },
             { id: "no_register_panel", response: "Tap “Monitoring and Cellular” → scroll down → tap “Unregister Panel” → tap “Unregister”. Tap Back and “Register Panel” should appear." },
-            { id: "code_2203_failed", response: () => {
-                saveState();
-                return `Tap Cancel. Please share the Service Number (top-right), then reboot the panel:\n\n${rebootForPanel(state.panel_type)}\n\nAfter it reboots, we’ll try again.`;
-              }
-            },
-            { id: "code_2203_failed_after_service_number", response: () => escalate("2203 failed after service number provided") }
+            { id: "code_2203_failed", response: () => `Tap Cancel. Please share the Service Number (top-right), then reboot the panel:\n\n${rebootForPanel(state.panel_type)}\n\nAfter it reboots, we’ll try again.` }
           ]
         },
         {
@@ -328,7 +248,7 @@ When “Registering” goes away, tap Done.`;
           message: () => {
             const csid = state.csid || "{{csid}}";
             return `Tap “System Testing” → scroll down → tap “Two-Way Voice Test”.
-To START the test, tap “Two-Way Voice Test” one more time.
+To START the test, tap “Two-Way Voice Test” one more time (or tap Start Test).
 
 When the voice finishes and it beeps, clearly say: “CORRECT CSID”.
 
@@ -343,8 +263,7 @@ CSID (if asked): ${csid}`;
               { id: "failed_to_initialize", label: "Failed to initialize" },
               { id: "dialing_then_ends", label: "Dialing then ends/hangs up" },
               { id: "waiting_for_status", label: "Stuck on waiting for status" },
-              { id: "operator_never_spoke", label: "Operator never spoke" },
-              { id: "operator_still_never_spoke", label: "Still no operator after retry" }
+              { id: "operator_never_spoke", label: "Operator never spoke" }
             ]
           },
           intents: [
@@ -353,14 +272,13 @@ CSID (if asked): ${csid}`;
             { id: "failed_to_initialize", response: "Tap Back. Turn ON Test Mode for 10 seconds, then turn it OFF. Try the Two-Way Voice Test again." },
             { id: "dialing_then_ends", response: "Tap Back twice → Monitoring and Cellular → Advanced Cellular Status → Reset Cellular Module. Then try the Two-Way Voice Test again." },
             { id: "waiting_for_status", response: () => `If it stays stuck for a while, reboot:\n\n${rebootForPanel(state.panel_type)}\n\nAfter reboot, try the Two-Way Voice Test again.` },
-            { id: "operator_never_spoke", response: "Tap Back twice → Monitoring and Cellular → Advanced Cellular Status → Reset Cellular Module. Then try the Two-Way Voice Test again." },
-            { id: "operator_still_never_spoke", response: "Tap Back twice → Monitoring and Cellular → change Cell Carrier (Verizon ↔ AT&T). Then Advanced Cellular Status → scroll to “SIM Card Number” and send a photo of that screen." }
+            { id: "operator_never_spoke", response: "Tap Back twice → Monitoring and Cellular → Advanced Cellular Status → Reset Cellular Module. Then try the Two-Way Voice Test again." }
           ]
         },
         {
           id: "step_4",
-          name: "Update your PIN",
-          message: () => `Update your PIN:
+          name: "Set up PIN (and Users menu)",
+          message: () => `Set up your PIN:
 
 1) Tap the 3 dots (bottom-right)
 2) Tap Users
@@ -380,7 +298,7 @@ When that’s done, tap Done.`,
             ]
           },
           intents: [
-            { id: "cant_find_users", response: "Tap Back until you’re on the Home Screen, then tap the 3 dots (bottom-right). You should see a left-side menu — tap Users." },
+            { id: "cant_find_users", response: "That’s okay. Tap Back until you’re on the Home Screen, then tap the 3 dots (bottom-right) and select Users." },
             { id: "2203_didnt_work_here", response: () => escalate("2203 failed at Users/PIN screen") },
             { id: "pin_save_failed", response: "Try the PIN again. If it still fails, back out, reboot the panel, then try again." },
             { id: "updating_user_pin_stuck", response: "Tap “Stop”, then tap the X. Your new PIN should still be saved." }
@@ -441,6 +359,96 @@ Or tap Done if you’re finished.`,
       ]
     };
 
+    /** ===== Panel-specific helpers ===== */
+    function smartHubReboot2Min() {
+      return `Slide the panel straight up off the wall. Remove the battery from the back, wait 10 seconds, then put the battery back in and place the panel back on the wall. It should say “Your system is rebooting.” This usually takes about 2 minutes. Let me know when it finishes and you’re back on the main screen.`;
+    }
+    function skyControlReboot5to10() {
+      return `Tap the Home button (bottom-right) → tap the 3 dots → General → enter 2203 (or your code if you have one) → scroll down → tap Reboot. You should see “Connecting Services.” This reboot usually takes 5–10 minutes. Let me know when it finishes and you’re back on the main screen.`;
+    }
+    function rebootForPanel(panelType) { return (panelType === "skycontrol") ? skyControlReboot5to10() : smartHubReboot2Min(); }
+    function powerCycleForPanel(panelType) {
+      if (panelType === "skycontrol") return `Please do a reboot (do not slide the panel off the wall):\n\n${skyControlReboot5to10()}`;
+      return `Slide the panel straight up off the wall. Make sure the battery is fully seated on the back of the panel. Place the panel back on the wall and make sure it clicks into place.`;
+    }
+
+    /** ===== Lost guidance (step-specific) ===== */
+    function homeReturnInstruction(panelType) {
+      // exactly as you specified
+      if (panelType === "skycontrol") return "Tap the House/Home button at the bottom-right.";
+      return "Tap the X inside of the shield in the bottom-left.";
+    }
+
+    function lostTextForStep(stepId) {
+      const home = homeReturnInstruction(state.panel_type);
+
+      if (stepId === "step_1") {
+        return `If you’re on the wrong screen:
+
+1) ${home}
+
+Once you’re back on the main screen, check the date/time (top-left), then tap Done here.`;
+      }
+
+      if (stepId === "step_2") {
+        return `If you’re on the wrong screen:
+
+1) ${home}
+2) Tap the 3 dots
+3) Tap Software Version
+4) Enter 2203
+
+Once you’re in, continue with registration, then tap Done here.`;
+      }
+
+      if (stepId === "step_3") {
+        return `If you’re on the wrong screen:
+
+1) ${home}
+2) Tap the 3 dots
+3) Tap Software Version
+4) Enter 2203
+5) Tap System Testing
+6) Scroll down and tap Two-Way Voice Test
+7) Tap Two-Way Voice Test again (or tap Start Test)
+8) When it beeps, say: “CORRECT CSID”
+
+Then tap Done here.`;
+      }
+
+      if (stepId === "step_4") {
+        return `If you’re on the wrong screen:
+
+1) ${home}
+2) Tap the 3 dots
+3) Tap Software Version
+4) Enter 2203
+5) Tap System Testing
+6) Make sure the Sounder switch is gray/black (OFF)
+7) Tap Back twice
+8) Tap Users
+
+Then continue with the PIN steps, and tap Done here when finished.`;
+      }
+
+      if (stepId === "step_5") {
+        return `If you’re on the wrong screen:
+
+1) ${home}
+2) Tap the white plus sign / cross symbol at the bottom
+
+Then continue the Panic test and tap Done here when finished.`;
+      }
+
+      // Step 6: keep it simple
+      return `If you’re on the wrong screen:
+
+1) ${home}
+2) Tap the 3 dots → Users
+
+Then continue and tap Done here when finished.`;
+    }
+
     /** ====== State ====== */
     function defaultState() {
       return {
@@ -450,8 +458,11 @@ Or tap Done if you’re finished.`,
         registration_code: "",
         service_number: "",
         history: ["step_1"],
+        // Used to restore the step message after "Issue" or "Lost"
         return_step_id: "step_1",
-        return_step_message: ""
+        return_step_message: "",
+        // When true, DONE returns to the step message instead of advancing
+        pending_return_to_step_on_done: false
       };
     }
 
@@ -493,7 +504,7 @@ Or tap Done if you’re finished.`,
     function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
     function loadState() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch { return null; } }
     function setOverlay(open) { overlay.classList.toggle("open", !!open); }
-    function withLoading(fn, delayMs = 450) {
+    function withLoading(fn, delayMs = 250) {
       setOverlay(true);
       setTimeout(() => { try { fn(); } finally { setOverlay(false); } }, delayMs);
     }
@@ -526,202 +537,33 @@ Or tap Done if you’re finished.`,
       return esc;
     }
 
-    function stepTarget(stepId) { return STEP_TARGET_SCREEN[stepId] || "home"; }
-
-    function findPath(startId, goalId) {
-      if (!startId || !goalId) return null;
-      if (startId === goalId) return [startId];
-      const q = [startId];
-      const prev = new Map();
-      prev.set(startId, null);
-
-      while (q.length) {
-        const cur = q.shift();
-        const nexts = SCREEN_EDGES[cur] || [];
-        for (const nxt of nexts) {
-          if (prev.has(nxt)) continue;
-          prev.set(nxt, cur);
-          if (nxt === goalId) {
-            const path = [goalId];
-            let p = cur;
-            while (p) { path.push(p); p = prev.get(p); }
-            return path.reverse();
-          }
-          q.push(nxt);
-        }
-      }
-      return null;
-    }
-
-    function buildRouteText(path) {
-      if (!path) return `• If you’re stuck, tap Back a few times, then try again.`;
-      if (path.length < 2) return `• You’re already on the correct screen.`;
-      const lines = [];
-      for (let i = 0; i < path.length - 1; i++) {
-        const a = path[i], b = path[i + 1];
-        const key = `${a}->${b}`;
-        const instruction = EDGE_INSTRUCTIONS[key] || SCREENS_BY_ID[b]?.navigation_to || `Go from ${SCREENS_BY_ID[a]?.name || a} to ${SCREENS_BY_ID[b]?.name || b}.`;
-        lines.push(`• ${instruction}`);
-      }
-      return lines.join("\n");
-    }
-
-    /** ===== One-button screen guidance (HOME first, then to target) ===== */
-    function guideToRightScreen() {
-      const stepId = state.current_step_id;
-      const targetId = stepTarget(stepId);
-      const targetName = SCREENS_BY_ID[targetId]?.name || targetId;
-
-      // Save return-to-step so they can bounce back
-      const step = getStep(stepId);
-      state.return_step_id = stepId;
-      state.return_step_message = step ? interpolateStepMessage(step) : botMessageEl.textContent;
+    /** ====== Issue flow: show fix, then DONE returns to step message ====== */
+    function openTempMessageThenReturnOnDone(tempMessage) {
+      const step = getStep(state.current_step_id);
+      state.return_step_id = state.current_step_id;
+      state.return_step_message = step ? interpolateStepMessage(step) : "";
+      state.pending_return_to_step_on_done = true;
       saveState();
 
-      const toTargetPath = (targetId === "home") ? ["home"] : findPath("home", targetId);
-      const toTargetText = buildRouteText(toTargetPath);
-
-      const homeFirst = [
-        "STEP 1 — Get to the Home Screen:",
-        "• Tap the shield-with-an-X in the bottom-left.",
-        "• If you don’t see it, tap Back until it appears, then tap it.",
-        "",
-        `STEP 2 — From Home, go to: ${targetName}`,
-        toTargetText,
-        "",
-        `When you arrive at “${targetName}”, tap “Back to step instructions” and complete the step.`
-      ].join("\n");
-
-      botMessageEl.textContent = homeFirst;
-      showReturnToStepHelper("Once you’re on the correct screen:");
+      botMessageEl.textContent = tempMessage;
+      showInfo("After you try that, tap Done to return to the step.");
     }
 
-    /** ====== Rendering ====== */
-    function render() {
-      const step = getStep(state.current_step_id) || getStep("step_1");
-      if (!getStep(state.current_step_id)) {
-        state.current_step_id = "step_1";
-        if (state.history?.length) state.history = ["step_1"];
-        saveState();
-      }
-
-      const panelLabel = state.panel_type ? (state.panel_type === "skycontrol" ? "SkyControl" : "SmartHub_toggle_";
-      // Fix label safely
-    }
-
-    // --- Fix accidental snippet in render above ---
-    function render() {
-      const step = getStep(state.current_step_id) || getStep("step_1");
-      if (!getStep(state.current_step_id)) {
-        state.current_step_id = "step_1";
-        state.history = ["step_1"];
-        saveState();
-      }
-
-      const panelLabel = state.panel_type
-        ? (state.panel_type === "skycontrol" ? "SkyControl" : "SmartHub")
-        : "Not set";
-
-      panelPill.textContent = panelLabel;
-      stepPill.textContent = `${step?.id || "—"} • ${step?.name || ""}`;
-
-      // Keep right panel fields in sync (even if hidden)
-      panelSelect.value = state.panel_type || "";
-      csidInput.value = state.csid || "";
-      regInput.value = state.registration_code || "";
-      serviceInput.value = state.service_number || "";
-
-      // Customer CSID pill
-      csidOnlyText.textContent = state.csid ? state.csid : "—";
-
-      // Message
-      const msg = step ? interpolateStepMessage(step) : "Step not found.";
-      botMessageEl.textContent = msg;
-
-      buildIssuesMenu(step);
-
-      // Nudge
-      if (isCustomerMode) {
-        showInfo(`If you get lost, tap “Take me to the right screen”.`);
-      } else {
-        const targetId = stepTarget(state.current_step_id);
-        const targetName = SCREENS_BY_ID[targetId]?.name || targetId;
-        showInfo(`Target screen for this step: ${targetName}`);
-      }
-
-      // If panel isn't set in agent mode, remind them (customer mode should always be prefilled)
-      if (!state.panel_type && !isCustomerMode) {
-        setStatus("Agent: choose panel type on the right before generating a customer link.");
-      } else {
-        setStatus("");
-      }
-    }
-
-    function buildIssuesMenu(step) {
-      issuesMenuEl.innerHTML = "";
-      if (!step?.ui?.issues?.length) return;
-
-      const title = document.createElement("div");
-      title.className = "muted small";
-      title.style.marginBottom = "8px";
-      title.textContent = "Choose the issue you’re seeing:";
-      issuesMenuEl.appendChild(title);
-
-      step.ui.issues.forEach(item => {
-        const btn = document.createElement("button");
-        btn.textContent = item.label;
-        btn.onclick = () => withLoading(() => {
-          handleIntent(item.id);
-          issuesMenuEl.classList.remove("open");
-        }, 300);
-        issuesMenuEl.appendChild(btn);
-      });
-    }
-
-    /** ====== Return-to-step helper ====== */
-    function showReturnToStepHelper(customTopText) {
-      const top = customTopText || "After you do that:";
-      helperPanel.innerHTML = `
-        <div class="ok">
-          <div style="font-weight:600; margin-bottom:8px;">${escapeHtml(top)}</div>
-          <div class="row compact" style="margin-top:8px;">
-            <button class="primary" id="backToStepBtn">🔁 Back to step instructions</button>
-            <button class="ghost" id="stayHereBtn">Stay on this message</button>
-          </div>
-          <div class="muted small" style="margin-top:8px;">
-            When you complete the step, tap Done to continue.
-          </div>
-        </div>
-      `;
-
-      document.getElementById("backToStepBtn").onclick = () => withLoading(() => {
-        const step = getStep(state.return_step_id || state.current_step_id);
-        const restore = state.return_step_message || (step ? interpolateStepMessage(step) : botMessageEl.textContent);
-        botMessageEl.textContent = restore;
-        showInfo("You’re back on the step instructions. Complete the step, then tap Done.");
-      }, 250);
-
-      document.getElementById("stayHereBtn").onclick = () => {
-        showInfo("Okay — follow the message above. When ready, use “Back to step instructions”.");
-      };
-    }
-
-    /** ====== Intent handling ====== */
     function handleIntent(intentId) {
       const step = getStep(state.current_step_id);
       const intent = step?.intents?.find(i => i.id === intentId);
       if (!intent) { showAlert("No message found for that option."); return; }
 
-      // Save original step message
-      state.return_step_id = state.current_step_id;
-      state.return_step_message = interpolateStepMessage(step);
-      saveState();
-
       let response = intent.response;
       if (typeof response === "function") response = response();
 
-      botMessageEl.textContent = response;
-      showReturnToStepHelper("After you try that fix:");
+      openTempMessageThenReturnOnDone(response);
+    }
+
+    /** ====== Lost button: step-specific generic return path ====== */
+    function handleLost() {
+      const txt = lostTextForStep(state.current_step_id);
+      openTempMessageThenReturnOnDone(txt);
     }
 
     /** ===== Customer Prefill + Customer Mode ===== */
@@ -753,13 +595,9 @@ Or tap Done if you’re finished.`,
       regInput.readOnly = true;
       serviceInput.readOnly = true;
 
-      // If the customer opens the link mid-flow, always ensure we start at step_1
-      if (!state.current_step_id || !getStep(state.current_step_id)) {
-        state.current_step_id = "step_1";
-        state.history = ["step_1"];
-      } else if (state.history?.length === 0) {
-        state.history = [state.current_step_id];
-      }
+      // Customers always start at step_1
+      state.current_step_id = "step_1";
+      state.history = ["step_1"];
       saveState();
     }
 
@@ -768,11 +606,8 @@ Or tap Done if you’re finished.`,
       if (payload.csid) state.csid = String(payload.csid).trim();
       if (payload.reg) state.registration_code = String(payload.reg).trim();
       if (payload.service) state.service_number = String(payload.service).trim();
-
-      // Force start at step_1 for customers
       state.current_step_id = "step_1";
       state.history = ["step_1"];
-
       saveState();
       applyCustomerMode();
     }
@@ -790,8 +625,82 @@ Or tap Done if you’re finished.`,
       return false;
     }
 
+    /** ====== Rendering ====== */
+    function render() {
+      const step = getStep(state.current_step_id) || getStep("step_1");
+      if (!getStep(state.current_step_id)) {
+        state.current_step_id = "step_1";
+        state.history = ["step_1"];
+        saveState();
+      }
+
+      const panelLabel = state.panel_type
+        ? (state.panel_type === "skycontrol" ? "SkyControl" : "SmartHub")
+        : "Not set";
+
+      panelPill.textContent = panelLabel;
+      stepPill.textContent = `${step?.id || "—"} • ${step?.name || ""}`;
+
+      panelSelect.value = state.panel_type || "";
+      csidInput.value = state.csid || "";
+      regInput.value = state.registration_code || "";
+      serviceInput.value = state.service_number || "";
+
+      csidOnlyText.textContent = state.csid ? state.csid : "—";
+
+      // If we are not currently showing a temp message, ensure step message is visible.
+      // (If temp message is showing, we keep it until user taps Done.)
+      if (!state.pending_return_to_step_on_done) {
+        const msg = step ? interpolateStepMessage(step) : "Step not found.";
+        botMessageEl.textContent = msg;
+      }
+
+      buildIssuesMenu(step);
+
+      if (isCustomerMode) {
+        clearHelper();
+      } else {
+        if (!state.panel_type) setStatus("Agent: choose panel type on the right before generating a customer link.");
+        else setStatus("");
+      }
+    }
+
+    function buildIssuesMenu(step) {
+      issuesMenuEl.innerHTML = "";
+      if (!step?.ui?.issues?.length) return;
+
+      const title = document.createElement("div");
+      title.className = "muted small";
+      title.style.marginBottom = "8px";
+      title.textContent = "Choose the issue you’re seeing:";
+      issuesMenuEl.appendChild(title);
+
+      step.ui.issues.forEach(item => {
+        const btn = document.createElement("button");
+        btn.textContent = item.label;
+        btn.onclick = () => withLoading(() => {
+          handleIntent(item.id);
+          issuesMenuEl.classList.remove("open");
+        }, 200);
+        issuesMenuEl.appendChild(btn);
+      });
+    }
+
     /** ====== Button handlers ====== */
     document.getElementById("doneBtn").onclick = () => withLoading(() => {
+      // If we are returning from an Issue/Lost message, DONE returns to step message (no step advance)
+      if (state.pending_return_to_step_on_done) {
+        const step = getStep(state.return_step_id || state.current_step_id);
+        const restore = state.return_step_message || (step ? interpolateStepMessage(step) : "");
+        state.pending_return_to_step_on_done = false;
+        saveState();
+
+        botMessageEl.textContent = restore || (step ? interpolateStepMessage(step) : botMessageEl.textContent);
+        showInfo("Back to the step. When you finish the step, tap Done again to continue.");
+        return;
+      }
+
+      // Normal DONE: advance to next step
       const idx = FLOW.steps.findIndex(s => s.id === state.current_step_id);
       if (idx < 0) { state.current_step_id = "step_1"; state.history = ["step_1"]; saveState(); render(); return; }
       const next = FLOW.steps[idx + 1];
@@ -805,16 +714,18 @@ Or tap Done if you’re finished.`,
       issuesMenuEl.classList.toggle("open");
     };
 
-    // One-button: Home first, then to target
     document.getElementById("lostBtn").onclick = () => withLoading(() => {
-      guideToRightScreen();
-    }, 250);
+      handleLost();
+      issuesMenuEl.classList.remove("open");
+    }, 200);
 
     document.getElementById("escalateBtn").onclick = () => withLoading(() => {
-      botMessageEl.textContent = escalate("Customer requested a person");
-      showAlert("A team member will assist from here.");
-      showReturnToStepHelper("If you’d like to keep going while we help:");
-    }, 250);
+      // As requested: simple contact instruction
+      state.pending_return_to_step_on_done = false; // don't trap DONE
+      saveState();
+      botMessageEl.textContent = "To chat with a representative, text (385) 425-0752)";
+      showAlert("If you already texted and need to keep going, you can continue with the steps above.");
+    }, 200);
 
     document.getElementById("copyBtn").onclick = async () => {
       try { await navigator.clipboard.writeText(botMessageEl.textContent); setStatus("Copied."); }
@@ -833,6 +744,7 @@ Or tap Done if you’re finished.`,
       state = defaultState();
       isCustomerMode = false;
       document.body.classList.remove("customerMode");
+      botMessageEl.textContent = interpolateStepMessage(getStep("step_1"));
       render();
       showInfo("Reset complete.");
     }, 200);
@@ -871,6 +783,9 @@ Or tap Done if you’re finished.`,
       }
     }
 
+    // Ensure initial message is step message
+    state.pending_return_to_step_on_done = false;
+    saveState();
     render();
   </script>
 </body>
