@@ -1,0 +1,910 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Vivint Guided Setup</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    body { margin: 0; background:#0b0f14; color:#e8eef6; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 18px; }
+    .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 14px; }
+    .card { background:#121a24; border:1px solid #1e2a3a; border-radius: 14px; padding: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+    h1 { font-size: 18px; margin: 0 0 10px; }
+    h2 { font-size: 14px; margin: 0 0 10px; color:#b9c7d8; }
+    .row { display:flex; gap:10px; flex-wrap: wrap; align-items: center; }
+    button, select, input, textarea { background:#0f1722; color:#e8eef6; border:1px solid #273549; border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+    button { cursor:pointer; }
+    button.primary { background:#1a3a66; border-color:#2b4d7a; }
+    button.danger { background:#5a1d1d; border-color:#7a2b2b; }
+    button.ghost { background:transparent; }
+    button:disabled { opacity: .45; cursor:not-allowed; }
+    .pill { display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; border:1px solid #273549; background:#0f1722; color:#b9c7d8; }
+    .muted { color:#9fb0c6; }
+    .divider { height:1px; background:#1e2a3a; margin: 12px 0; }
+    .menu { display:none; margin-top: 10px; }
+    .menu.open { display:block; }
+    .menu button { width:100%; text-align:left; margin-bottom: 8px; }
+    .status { font-size: 12px; color:#9fb0c6; }
+    .big { font-size: 15px; line-height: 1.4; white-space: pre-wrap; }
+    .alert { border: 1px solid #7a2b2b; background: rgba(122,43,43,.18); padding: 10px 12px; border-radius: 12px; }
+    .ok { border: 1px solid #2b7a52; background: rgba(43,122,82,.16); padding: 10px 12px; border-radius: 12px; }
+    .small { font-size: 12px; }
+    .rightcol textarea { min-height: 220px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 12px; }
+
+    /* Loading overlay */
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index: 9999; backdrop-filter: blur(2px); }
+    .overlay.open { display:flex; }
+    .loaderCard { width: min(420px, 92vw); background:#121a24; border:1px solid #273549; border-radius: 16px; padding: 18px; box-shadow: 0 14px 40px rgba(0,0,0,.5); display:flex; gap:14px; align-items:center; }
+    .spinner { width: 26px; height: 26px; border-radius: 999px; border: 3px solid rgba(255,255,255,.18); border-top-color: rgba(255,255,255,.9); animation: spin .8s linear infinite; flex: 0 0 auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* CUSTOMER MODE (prefilled link): hide right panel, show CSID only */
+    .customerHide { display:none !important; }
+    .csidOnlyWrap { display:none; }
+    .customerMode .grid { grid-template-columns: 1fr; }            /* left only */
+    .customerMode #rightCard { display:none; }                      /* hide right card entirely */
+    .customerMode .csidOnlyWrap { display:block; margin-top:10px; } /* show CSID on left */
+  </style>
+</head>
+
+<body>
+  <!-- Loading overlay -->
+  <div class="overlay" id="overlay">
+    <div class="loaderCard">
+      <div class="spinner"></div>
+      <div>
+        <div style="font-weight:600;">One moment…</div>
+        <div class="muted small">Preparing the next message.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="row" style="justify-content: space-between;">
+      <h1>Vivint Guided Setup</h1>
+      <div class="row">
+        <span class="pill">Panel: <strong id="panelPill">Not set</strong></span>
+        <span class="pill">Step: <strong id="stepPill">—</strong></span>
+        <button class="ghost" id="resetBtn">Reset</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- LEFT -->
+      <div class="card">
+        <h2>Message</h2>
+        <div id="botMessage" class="big"></div>
+
+        <!-- CSID-only display (visible in customer mode) -->
+        <div class="csidOnlyWrap" id="csidOnlyWrap">
+          <div class="divider"></div>
+          <div class="row">
+            <span class="pill">CSID: <strong id="csidOnlyText">—</strong></span>
+            <button id="copyCsidBtn">📋 Copy CSID</button>
+          </div>
+          <div class="muted small">If the monitoring station asks, share this CSID.</div>
+        </div>
+
+        <div class="divider"></div>
+        <div class="row">
+          <button class="primary" id="doneBtn">✅ Done</button>
+          <button id="issuesBtn">⚠️ I’m having an issue</button>
+          <button id="lostBtn">🧭 Help me find the right screen</button>
+          <button class="danger" id="escalateBtn">🚨 I need help from a person</button>
+        </div>
+
+        <div id="issuesMenu" class="menu"></div>
+
+        <div class="divider"></div>
+        <div class="row">
+          <button id="copyBtn">📋 Copy message</button>
+          <button id="backBtn">⬅️ Back one step</button>
+          <span class="status" id="statusLine"></span>
+        </div>
+
+        <div id="helperPanel" style="margin-top:12px;"></div>
+      </div>
+
+      <!-- RIGHT (hidden in customer mode) -->
+      <div class="card rightcol" id="rightCard">
+        <h2>Setup Details</h2>
+
+        <div class="row">
+          <label class="pill">
+            Panel type:
+            <select id="panelSelect">
+              <option value="">Select…</option>
+              <option value="smarthub">SmartHub</option>
+              <option value="skycontrol">SkyControl</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="divider"></div>
+
+        <h2>Information</h2>
+        <div class="row">
+          <label class="pill">CSID: <input id="csid" placeholder="EZ123456" /></label>
+          <label class="pill">Registration code: <input id="reg" placeholder="ABCD-EFGH-IJKL-LMNO" /></label>
+        </div>
+        <div class="row">
+          <label class="pill">Service # (top-right): <input id="serviceNum" placeholder="Service number…" /></label>
+        </div>
+
+        <div class="divider"></div>
+
+        <h2>Escalation message</h2>
+        <textarea id="escalationText" class="mono"></textarea>
+        <div class="row">
+          <button id="copyEscBtn">📋 Copy escalation</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <h2>Share</h2>
+        <div class="row">
+          <button class="primary" id="makeLinkBtn">🔗 Generate customer link</button>
+          <button id="copyLinkBtn" disabled>📋 Copy link</button>
+        </div>
+        <div class="row" style="width:100%;">
+          <input id="shareLink" style="width:100%;" placeholder="Link will appear here…" readonly />
+        </div>
+        <div class="muted small" style="margin-top:6px;">
+          Tip: Uses a hash-link so the values are not typically sent as referrer data.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * Customer Prefill + Customer Mode:
+     * - If opened via a prefilled link (#prefill=...), the page switches to customer mode:
+     *   - Right panel is hidden entirely
+     *   - Only CSID is displayed (left side) for monitoring-station use
+     * - You can still generate a prefilled link from the right panel (agent view).
+     */
+
+    const STORAGE_KEY = "vivint_activation_flow_customer_v3";
+    let isCustomerMode = false;
+
+    /* =========================== SCREEN MAP (from screen_map.json) =========================== */
+    const SCREEN_MAP = {"screens":[{"id":"home","name":"Home Screen","visible_elements":["Date, time, and weather in top-left","Message: 'Everything looks good. Your home is ready to arm.' OR 'System not ready to arm.'","Large white circle with shield saying Disarmed / Armed Stay / Armed Away","WiFi, power, and volume icons in top-right","Bottom bar: shield with X, temperature, camera icon (optional), lock icon (optional), plus/medical icon, three dots"],"navigation_to":"Tap the shield with X in the bottom-left. If you don’t see it, tap Back until it appears, then tap it.","navigation_from":"Tap 3 dots for menus, plus/medical for panic, or the large shield circle to arm/disarm.","used_in_steps":["step_1","step_5"]},{"id":"support","name":"Support Menu","visible_elements":["Left menu shows: Devices, Users, Security, General, Support","Support screen shows options like: Software Version, System Testing, Monitoring and Cellular, and other tools","Three dots menu was used to get here"],"navigation_to":"From Home Screen, tap the 3 dots (bottom-right).","navigation_from":"Tap Software Version for PIN prompt, tap Users from left menu, or tap back arrow to return.","used_in_steps":["step_1","step_2","step_3","step_4","step_6"]},{"id":"pin_for_access","name":"PIN Prompt (Software Version)","visible_elements":["Screen asks for a PIN to continue","Usually appears after tapping Software Version","Has keypad and entry field"],"navigation_to":"From Support Menu, tap Software Version.","navigation_from":"Enter 2203 to access Installer Toolbox (or proceed).","used_in_steps":["step_2","step_3"]},{"id":"installer_toolbox","name":"Installer Toolbox","visible_elements":["Menu with items such as Register panel, System testing, and other installer options","Top area may show Installer Toolbox title","Options listed in a simple menu format"],"navigation_to":"From PIN prompt, enter 2203.","navigation_from":"Tap Register panel for registration step, or System testing for Two-Way Voice Test.","used_in_steps":["step_2","step_3"]},{"id":"register_panel","name":"Register Panel Screen","visible_elements":["Option: Register panel","Field to enter registration code","May show status: Registering","May show error messages like DNS error, SIM status too old, etc."],"navigation_to":"From Installer Toolbox, tap Register panel.","navigation_from":"After registering completes, tap back to Installer Toolbox or exit to Home.","used_in_steps":["step_2"]},{"id":"system_testing","name":"System Testing Menu","visible_elements":["Menu shows testing options","Contains Two-Way Voice Test option","Scrollable list"],"navigation_to":"From Installer Toolbox, tap System testing.","navigation_from":"Scroll to Two-Way Voice Test and tap it.","used_in_steps":["step_3"]},{"id":"twoway_voice_current","name":"Two-Way Voice Test Screen (Ready)","visible_elements":["Shows Two-Way Voice Test option","May have status text like Ready or instructions","Important: You start test by tapping Two-Way Voice Test again (not Start Test)"],"navigation_to":"From System Testing menu, tap Two-Way Voice Test.","navigation_from":"Tap Two-Way Voice Test again to initiate call.","used_in_steps":["step_3"]},{"id":"two_way_call","name":"Two-Way Call In Progress","visible_elements":["Status: In Call or Waiting for status","May show 'Connecting to operator'","May show call timer or connection status"],"navigation_to":"From Two-Way Voice Test screen, tap Two-Way Voice Test again to start.","navigation_from":"Ends automatically or returns back; may require troubleshooting if stuck or kicks out.","used_in_steps":["step_3"]},{"id":"vivint_monitoring_station","name":"Monitoring Station Connected","visible_elements":["Operator voice comes through","May show connected status","May prompt for CSID"],"navigation_to":"Occurs automatically if Two-Way Voice Test connects successfully.","navigation_from":"After test ends, return to Two-Way Voice Test or System Testing menu.","used_in_steps":["step_3"]},{"id":"users","name":"Users Menu","visible_elements":["Left menu still visible","Users screen lists admins/users","Has Duress User option","Has Add new user at bottom"],"navigation_to":"From Support menu, tap Users in left menu.","navigation_from":"Tap Duress User or your name to edit PIN.","used_in_steps":["step_4","step_6"]},{"id":"duress_user","name":"Duress User Screen","visible_elements":["Shows Duress User settings","Toggle should be enabled","PIN shown as 2580"],"navigation_to":"From Users menu, tap Duress User.","navigation_from":"Tap back to return to Users list.","used_in_steps":["step_4"]},{"id":"customer_user","name":"Primary Admin User Details","visible_elements":["Shows user details","Has PIN section","Has phone/email fields for app invite"],"navigation_to":"From Users menu, tap your name (Primary Admin).","navigation_from":"Tap PIN to change, or enter phone/email to send invitation.","used_in_steps":["step_4","step_6"]},{"id":"pin_entry","name":"PIN Entry Screen","visible_elements":["Prompts to enter a 4-digit PIN","May show Updating user PIN","Has keypad"],"navigation_to":"From user details, tap PIN.","navigation_from":"After entry completes, returns to user details.","used_in_steps":["step_4"]},{"id":"panic_menu","name":"Panic Menu","visible_elements":["Opened by tapping plus/medical icon","Shows options like Panic","May show Medical/Fire (varies)"],"navigation_to":"From Home, tap the white plus/cross icon at bottom.","navigation_from":"Tap Panic and hold, or tap X to exit.","used_in_steps":["step_5"]},{"id":"panic_alarm","name":"Panic Alarm Triggered / Recent Alarms","visible_elements":["Alarm status may display","May require PIN to disarm","May show Recent Alarms screen"],"navigation_to":"From Panic menu, press and hold Panic for 2 seconds.","navigation_from":"Enter disarm code, then exit Recent Alarms by tapping X top-right.","used_in_steps":["step_5"]},{"id":"recent_alarms","name":"Recent Alarms Screen","visible_elements":["Title: Recent Alarms","List of alarm events","X button top-right to close"],"navigation_to":"After disarming Panic, it may show Recent Alarms automatically.","navigation_from":"Tap X (top-right) to return to Home.","used_in_steps":["step_5"]},{"id":"drag_to_arm","name":"Arming Slider Screen (Disarmed)","visible_elements":["Shows Disarmed status","Slider to arm Stay/Away","May show prompts for readiness"],"navigation_to":"From Home, tap the large circle that says Disarmed.","navigation_from":"Slide left to arm Stay; then disarm by dragging down and entering PIN.","used_in_steps":["step_5"]},{"id":"arming_countdown","name":"Arming Countdown","visible_elements":["Countdown timer while arming","Shows Stay/Away status","May show exit delay"],"navigation_to":"From Arming slider, slide to arm mode.","navigation_from":"After countdown ends, shows Armed Stay; disarm by dragging down.","used_in_steps":["step_5"]},{"id":"armed_stay","name":"Armed Stay Screen","visible_elements":["Shows Armed Stay","May show disarm option","Shield circle indicates armed"],"navigation_to":"Occurs after arming countdown completes.","navigation_from":"Drag down to disarm, enter PIN.","used_in_steps":["step_5"]},{"id":"disarm_drag","name":"Disarm Drag Prompt","visible_elements":["Prompt to drag down to disarm","PIN keypad appears after dragging","Disarm confirmation"],"navigation_to":"From Armed Stay, drag down to disarm.","navigation_from":"Enter PIN to return to Home (Disarmed).","used_in_steps":["step_5"]}]};
+    const SCREENS_BY_ID = Object.fromEntries((SCREEN_MAP.screens || []).map(s => [s.id, s]));
+
+    /* Graph connections (deterministic). */
+    const SCREEN_EDGES = {
+      home: ["support", "panic_menu", "drag_to_arm"],
+      support: ["home", "pin_for_access", "installer_toolbox", "users"],
+      pin_for_access: ["support", "installer_toolbox"],
+      installer_toolbox: ["support", "register_panel", "system_testing"],
+      register_panel: ["installer_toolbox"],
+      system_testing: ["installer_toolbox", "twoway_voice_current"],
+      twoway_voice_current: ["system_testing", "two_way_call"],
+      two_way_call: ["twoway_voice_current", "vivint_monitoring_station"],
+      vivint_monitoring_station: ["two_way_call"],
+      users: ["support", "duress_user", "customer_user"],
+      duress_user: ["users"],
+      customer_user: ["users", "pin_entry"],
+      pin_entry: ["customer_user"],
+      panic_menu: ["home", "panic_alarm"],
+      panic_alarm: ["recent_alarms"],
+      recent_alarms: ["home"],
+      drag_to_arm: ["home", "arming_countdown"],
+      arming_countdown: ["armed_stay", "home"],
+      armed_stay: ["disarm_drag"],
+      disarm_drag: ["home"]
+    };
+
+    const EDGE_INSTRUCTIONS = {
+      "home->support": "From the Home Screen, tap the 3 dots (bottom-right).",
+      "support->pin_for_access": "Tap Software Version (this brings up the PIN screen).",
+      "pin_for_access->installer_toolbox": "Enter 2203 to open Installer Toolbox.",
+      "installer_toolbox->register_panel": "Tap Register Panel.",
+      "installer_toolbox->system_testing": "Tap System Testing.",
+      "system_testing->twoway_voice_current": "Scroll down and tap Two-Way Voice Test.",
+      "twoway_voice_current->two_way_call": "To start the test, tap Two-Way Voice Test one more time.",
+      "support->users": "On the left menu, tap Users.",
+      "users->duress_user": "Tap Duress User.",
+      "users->customer_user": "Tap your name (Primary Admin).",
+      "customer_user->pin_entry": "Tap the PIN row.",
+      "home->panic_menu": "Tap the white plus/cross icon along the bottom row.",
+      "panic_menu->panic_alarm": "Press and hold PANIC for 2 seconds.",
+      "panic_alarm->recent_alarms": "Disarm with a code, then you’ll see Recent Alarms.",
+      "home->drag_to_arm": "Tap the large circle that says Disarmed.",
+      "drag_to_arm->arming_countdown": "Slide left into Stay mode to arm.",
+      "arming_countdown->armed_stay": "Wait for the countdown to finish.",
+      "armed_stay->disarm_drag": "Drag down to disarm, then enter your PIN."
+    };
+
+    /* Which screen we want them on for each step */
+    const STEP_TARGET_SCREEN = {
+      step_1: "home",
+      step_2: "installer_toolbox",
+      step_3: "system_testing",
+      step_4: "users",
+      step_5: "home",
+      step_6: "users"
+    };
+
+    /** ====== Scripted text blocks that vary by panel type ====== */
+    function smartHubReboot2Min() {
+      return `Slide the panel straight up off the wall. Remove the battery from the back, wait 10 seconds, then put the battery back in and place the panel back on the wall. It should say “Your system is rebooting.” This usually takes about 2 minutes. Let me know when it finishes and you’re back on the main screen.`;
+    }
+    function skyControlReboot5to10() {
+      return `Tap the Home button (bottom-right) → tap the 3 dots → General → enter 2203 (or your code if you have one) → scroll down → tap Reboot. You should see “Connecting Services.” This reboot usually takes 5–10 minutes. Let me know when it finishes and you’re back on the main screen.`;
+    }
+    function rebootForPanel(panelType) { return (panelType === "skycontrol") ? skyControlReboot5to10() : smartHubReboot2Min(); }
+    function powerCycleForPanel(panelType) {
+      if (panelType === "skycontrol") {
+        return `Please do a reboot (do not slide the panel off the wall):\n\n${skyControlReboot5to10()}`;
+      }
+      return `Slide the panel straight up off the wall. Make sure the battery is fully seated on the back of the panel. Place the panel back on the wall and make sure it clicks into place.`;
+    }
+
+    /** ====== Core flow model ====== */
+    const FLOW = {
+      steps: [
+        {
+          id: "step_0",
+          name: "Choose your panel",
+          message: () => `To get started, please choose which panel you have.`,
+          ui: {
+            choices: [
+              { id: "smarthub", label: "🟦 SmartHub", action: (st)=>{ st.panel_type="smarthub"; gotoStep("step_1"); } },
+              { id: "skycontrol", label: "⬛ SkyControl", action: (st)=>{ st.panel_type="skycontrol"; gotoStep("step_1"); } },
+              { id: "unknown", label: "❓ Not sure", action: ()=> showInfo("No problem — choose the closest match. If you’re unsure, look for a Home button on the bottom-right (SkyControl typically has one).") }
+            ]
+          },
+          intents: []
+        },
+        {
+          id: "step_1",
+          name: "Main screen check",
+          message: () => `Please verify:
+1) The panel is powered on
+2) The date and time (top-left) look correct
+
+When that’s done, tap Done.`,
+          ui: {
+            issues: [
+              { id: "panel_not_on", label: "The panel is not on / screen is black" },
+              { id: "panel_still_not_on_after_power", label: "Still not on after checking power" },
+              { id: "panel_off_after_breaker_ok", label: "Breaker is on, still off" },
+              { id: "bad_date_time", label: "Date/time are not correct" },
+              { id: "off_path_screen", label: "I’m on a different screen" }
+            ]
+          },
+          intents: [
+            { id: "off_path_screen", response: "No problem — tap the X inside the shield (bottom-left) to return to the Home Screen." },
+            { id: "panel_not_on", response: "Please check that the small white power box below the panel is plugged in, and that both wires are connected securely." },
+            { id: "panel_still_not_on_after_power", response: () => powerCycleForPanel(state.panel_type) },
+            { id: "panel_off_after_breaker_ok", response: () => escalate("Power issue after breaker check") },
+            { id: "bad_date_time", response: () => `Let’s reboot the panel:\n\n${rebootForPanel(state.panel_type)}` }
+          ]
+        },
+        {
+          id: "step_2",
+          name: "Register the panel",
+          message: () => {
+            const rc = (state.registration_code || "{{registration_code}}");
+            return `Tap the 3 dots (bottom-right) → Software Version.
+When prompted, enter 2203.
+Tap “Register Panel” and enter this registration code WITHOUT dashes:
+
+${stripDashes(rc)}
+
+When “Registering” goes away, tap Done.`;
+          },
+          ui: {
+            issues: [
+              { id: "sim_status_too_old", label: "SIM status is too old" },
+              { id: "dns_error", label: "DNS error / time not synced" },
+              { id: "no_phone_number", label: "No phone number found" },
+              { id: "vivint_services_no_response", label: "Vivint services did not respond" },
+              { id: "code_2203_failed", label: "2203 didn’t work" },
+              { id: "code_2203_failed_after_service_number", label: "2203 still didn’t work (after service number)" },
+              { id: "register_code_case", label: "Is the registration code case sensitive?" },
+              { id: "no_register_panel", label: "I don’t see “Register Panel”" }
+            ]
+          },
+          intents: [
+            { id: "sim_status_too_old", response: "Tap Back twice → Monitoring and Cellular → scroll to the bottom → Advanced Cellular Status → scroll to the bottom → Reset Cellular Module. Then tap Back twice and try registering again." },
+            { id: "dns_error", response: () => `Let’s reboot the panel:\n\n${rebootForPanel(state.panel_type)}` },
+            { id: "no_phone_number", response: () => `Let’s reboot the panel:\n\n${rebootForPanel(state.panel_type)}` },
+            { id: "vivint_services_no_response", response: () => `Let’s reboot the panel:\n\n${rebootForPanel(state.panel_type)}` },
+            { id: "register_code_case", response: "No — the registration code is not case sensitive." },
+            { id: "no_register_panel", response: "Tap “Monitoring and Cellular” → scroll down → tap “Unregister Panel” → tap “Unregister”. Tap Back and “Register Panel” should appear." },
+            { id: "code_2203_failed", response: () => {
+                state.service_number_provided = false;
+                saveState();
+                return `Tap Cancel. Please share the Service Number (top-right), then reboot the panel:\n\n${rebootForPanel(state.panel_type)}\n\nAfter it reboots, we’ll try again.`;
+              }
+            },
+            { id: "code_2203_failed_after_service_number", response: () => escalate("2203 failed after service number provided") }
+          ]
+        },
+        {
+          id: "step_3",
+          name: "Two-Way Voice Test",
+          message: () => {
+            const csid = state.csid || "{{csid}}";
+            return `Tap “System Testing” → scroll down → tap “Two-Way Voice Test”.
+To START the test, tap “Two-Way Voice Test” one more time.
+
+When the voice finishes and it beeps, clearly say: “CORRECT CSID”.
+
+Then tap Done and tell me what happens.
+
+CSID (if asked): ${csid}`;
+          },
+          ui: {
+            issues: [
+              { id: "in_call_or_waiting_no_voice_kicks_out", label: "In Call / Waiting for Status (no voice), then it kicks out" },
+              { id: "not_ready_for_test", label: "Not ready for test" },
+              { id: "failed_to_initialize", label: "Failed to initialize" },
+              { id: "dialing_then_ends", label: "Dialing then ends/hangs up" },
+              { id: "waiting_for_status", label: "Stuck on waiting for status" },
+              { id: "connecting_to_operator", label: "Connecting to an operator" },
+              { id: "operator_never_spoke", label: "Operator never spoke" },
+              { id: "operator_still_never_spoke", label: "Still no operator after retry" },
+              { id: "lost_in_menus", label: "I don’t see it / I’m lost in menus" }
+            ]
+          },
+          intents: [
+            { id: "lost_in_menus", response: "No worries — use “Help me find the right screen” and choose what you’re looking at now." },
+            { id: "in_call_or_waiting_no_voice_kicks_out", response: () => escalate("Two-way test: In Call/Waiting for Status (no voice) then kick out") },
+            { id: "not_ready_for_test", response: () => `Tap Back twice → Monitoring and Cellular → Advanced Cellular Status → Reset Cellular Module. Then try the Two-Way Voice Test again. If it still says “Not ready for test,” reboot:\n\n${rebootForPanel(state.panel_type)}` },
+            { id: "failed_to_initialize", response: "Tap Back. Turn ON Test Mode for 10 seconds, then turn it OFF. Try the Two-Way Voice Test again." },
+            { id: "dialing_then_ends", response: "Tap Back twice → Monitoring and Cellular → Advanced Cellular Status → Reset Cellular Module. Then try the Two-Way Voice Test again." },
+            { id: "waiting_for_status", response: () => `If it stays stuck for a while, reboot:\n\n${rebootForPanel(state.panel_type)}\n\nAfter reboot, try the Two-Way Voice Test again.` },
+            { id: "connecting_to_operator", response: () => `Perfect — if the operator asks, share this CSID: ${state.csid || "{{csid}}"}.` },
+            { id: "operator_never_spoke", response: "Tap Back twice → Monitoring and Cellular → Advanced Cellular Status → Reset Cellular Module. Then try the Two-Way Voice Test again." },
+            { id: "operator_still_never_spoke", response: "Tap Back twice → Monitoring and Cellular → change Cell Carrier (Verizon ↔ AT&T). Then Advanced Cellular Status → scroll to “SIM Card Number” and send a photo of that screen." }
+          ]
+        },
+        {
+          id: "step_4",
+          name: "Set up PINs",
+          message: () => `Now we’ll set up your PINs:
+1) Go back once and turn OFF the Sounder (toggle should be gray/black)
+2) Go back twice and tap “Users” (left side)
+3) Tap “Duress User” → make sure it’s enabled and the code is 2580
+4) Go back once → tap your name → tap “PIN” → choose any 4 digits
+
+When finished, tap Done.`,
+          ui: {
+            issues: [
+              { id: "pin_navigation_help", label: "I can’t find Users / Duress / PIN" },
+              { id: "add_new_user", label: "Add a new user" },
+              { id: "duplicate_name", label: "My name is listed twice" },
+              { id: "updating_user_pin_stuck", label: "Stuck on updating user PIN" },
+              { id: "failed_to_update_lock_pin", label: "Failed to update PIN on locks" }
+            ]
+          },
+          intents: [
+            { id: "pin_navigation_help", response: "Tap Back until you see the left menu (Devices / Users / Security / General / Support). Tap “Users”, then select “Duress User” or your name to update the PIN." },
+            { id: "add_new_user", response: "You can add another user anytime. If you want to add them now, tap “Add new user” at the bottom and fill in the details." },
+            { id: "duplicate_name", response: "You can delete one of the duplicates. If one is all lowercase with your full name, keep that one and delete the other." },
+            { id: "updating_user_pin_stuck", response: "Tap “Stop”, then tap the X. Your new PIN should still be saved." },
+            { id: "failed_to_update_lock_pin", response: "If the PIN shows correctly on the panel, that’s okay for now. The lock can be updated later when it’s online." }
+          ]
+        },
+        {
+          id: "step_5",
+          name: "Panic + Arming test",
+          message: () => `Now we’ll test Panic and Arming.
+
+Panic test:
+1) Tap the white plus/cross icon at the bottom
+2) Press and hold PANIC for 2 seconds
+3) Enter 2580 to disarm
+4) Tap the X (top-right) to exit “Recent Alarms”
+
+Arming test:
+1) Tap “Disarmed”
+2) Slide left into Stay mode
+3) Disarm by dragging down and entering your 4-digit PIN
+
+When finished, tap Done.`,
+          ui: {
+            issues: [
+              { id: "will_this_sound", label: "Will this be loud / sound the alarm?" },
+              { id: "duress_not_working", label: "2580 isn’t working to disarm" },
+              { id: "panic_or_arm_navigation_help", label: "I’m lost / can’t find the right screen" },
+              { id: "not_ready_to_arm", label: "System says not ready to arm" }
+            ]
+          },
+          intents: [
+            { id: "panic_or_arm_navigation_help", response: "Use “Help me find the right screen” and choose what you’re looking at now." },
+            { id: "will_this_sound", response: "If the Sounder was turned off earlier, it should not be loud." },
+            { id: "duress_not_working", response: "That’s okay — just use your personal PIN to disarm for now." },
+            { id: "not_ready_to_arm", response: "That’s okay — you can tap “Arm Anyway” and enter your PIN. We can fix the warning later." }
+          ]
+        },
+        {
+          id: "step_6",
+          name: "Emergency contact + verbal password",
+          message: () => `Last step — please choose what you want to do next:
+• Add Emergency Contact
+• Set Verbal Password
+• App Invite
+
+Or tap Done if you’re finished.`,
+          ui: {
+            issues: [
+              { id: "collect_emergency_contact", label: "Add emergency contact" },
+              { id: "verbal_password_info", label: "What is a verbal password?" },
+              { id: "app_invite_instructions", label: "Help with app invite" }
+            ]
+          },
+          intents: [
+            { id: "collect_emergency_contact", response: "Please share the first name, last name, and phone number for an emergency contact." },
+            { id: "verbal_password_info", response: "A verbal password is a word or number you say if we call during an alarm to confirm you’re safe. It can be any word or number." },
+            { id: "app_invite_instructions", response: "Tap the 3 dots (bottom-right) → Users → select your name. Enter your phone number and email address, then tap “Send invitation.”" }
+          ]
+        }
+      ]
+    };
+
+    /** ====== State ====== */
+    let state = loadState() || {
+      current_step_id: "step_0",
+      panel_type: "",
+      csid: "",
+      registration_code: "",
+      service_number: "",
+      history: ["step_0"],
+      return_step_id: "step_0",
+      return_step_message: ""
+    };
+
+    const escalationDefault = `Thanks — I’m going to bring in a team member to help you from here.`;
+
+    /** ====== UI elements ====== */
+    const botMessageEl = document.getElementById("botMessage");
+    const stepPill = document.getElementById("stepPill");
+    const panelPill = document.getElementById("panelPill");
+    const issuesMenuEl = document.getElementById("issuesMenu");
+    const statusLine = document.getElementById("statusLine");
+    const helperPanel = document.getElementById("helperPanel");
+    const csidInput = document.getElementById("csid");
+    const regInput = document.getElementById("reg");
+    const serviceInput = document.getElementById("serviceNum");
+    const panelSelect = document.getElementById("panelSelect");
+    const overlay = document.getElementById("overlay");
+
+    const csidOnlyText = document.getElementById("csidOnlyText");
+    const copyCsidBtn = document.getElementById("copyCsidBtn");
+
+    const escalationTextEl = document.getElementById("escalationText");
+    escalationTextEl.value = escalationDefault;
+
+    const makeLinkBtn = document.getElementById("makeLinkBtn");
+    const copyLinkBtn = document.getElementById("copyLinkBtn");
+    const shareLinkInput = document.getElementById("shareLink");
+
+    /** ====== Helpers ====== */
+    function stripDashes(code) { return (code || "").replace(/-/g, ""); }
+    function getStep(stepId) { return FLOW.steps.find(s => s.id === stepId); }
+    function setStatus(msg) { statusLine.textContent = msg || ""; }
+    function escapeHtml(s) {
+      return (s||"").replace(/[&<>"']/g, (m)=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[m]));
+    }
+    function showInfo(msg) { helperPanel.innerHTML = `<div class="ok">${escapeHtml(msg).replace(/\n/g,"<br>")}</div>`; }
+    function showAlert(msg) { helperPanel.innerHTML = `<div class="alert">${escapeHtml(msg).replace(/\n/g,"<br>")}</div>`; }
+    function clearHelper() { helperPanel.innerHTML = ""; }
+    function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    function loadState() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch { return null; } }
+    function setOverlay(open) { overlay.classList.toggle("open", !!open); }
+    function withLoading(fn, delayMs = 650) {
+      setOverlay(true);
+      setTimeout(() => { try { fn(); } finally { setOverlay(false); } }, delayMs);
+    }
+
+    function interpolateStepMessage(step) {
+      let msg = typeof step.message === "function" ? step.message() : step.message;
+      msg = msg.replace(/\{\{csid\}\}/g, state.csid || "{{csid}}");
+      msg = msg.replace(/\{\{registration_code\}\}/g, state.registration_code || "{{registration_code}}");
+      return msg;
+    }
+
+    function gotoStep(stepId) { state.current_step_id = stepId; state.history.push(stepId); saveState(); render(); }
+    function goBackOneStep() {
+      if (state.history.length <= 1) return;
+      state.history.pop();
+      state.current_step_id = state.history[state.history.length - 1];
+      saveState();
+      render();
+    }
+
+    function escalate(reason) {
+      const esc = escalationTextEl.value || escalationDefault;
+      setStatus(`Help requested: ${reason}`);
+      return esc;
+    }
+
+    /* ===== Screen routing (uses screen map + edges) ===== */
+    function findPath(startId, goalId) {
+      if (!startId || !goalId) return null;
+      if (startId === goalId) return [startId];
+      const q = [startId];
+      const prev = new Map();
+      prev.set(startId, null);
+
+      while (q.length) {
+        const cur = q.shift();
+        const nexts = SCREEN_EDGES[cur] || [];
+        for (const nxt of nexts) {
+          if (prev.has(nxt)) continue;
+          prev.set(nxt, cur);
+          if (nxt === goalId) {
+            const path = [goalId];
+            let p = cur;
+            while (p) { path.push(p); p = prev.get(p); }
+            return path.reverse();
+          }
+          q.push(nxt);
+        }
+      }
+      return null;
+    }
+
+    function buildRouteText(path) {
+      if (!path) return `• Tap Back until you can see the Home Screen, then try again.`;
+      if (path.length < 2) return `• You’re already on the correct screen.`;
+      const lines = [];
+      for (let i = 0; i < path.length - 1; i++) {
+        const a = path[i], b = path[i + 1];
+        const key = `${a}->${b}`;
+        const instruction = EDGE_INSTRUCTIONS[key] || SCREENS_BY_ID[b]?.navigation_to || `Go from ${SCREENS_BY_ID[a]?.name || a} to ${SCREENS_BY_ID[b]?.name || b}.`;
+        lines.push(`• ${instruction}`);
+      }
+      return lines.join("\n");
+    }
+
+    function stepTarget(stepId) { return STEP_TARGET_SCREEN[stepId] || "home"; }
+
+    /** ===== Customer Prefill + Customer Mode ===== */
+    function encodeB64Url(str) {
+      return btoa(unescape(encodeURIComponent(str)))
+        .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+    }
+    function decodeB64Url(b64url) {
+      const b64 = b64url.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((b64url.length + 3) % 4);
+      return decodeURIComponent(escape(atob(b64)));
+    }
+    function buildShareLinkFromState() {
+      const payload = {
+        panel: state.panel_type || "",
+        csid: state.csid || "",
+        reg: state.registration_code || "",
+        service: state.service_number || ""
+      };
+      const packed = encodeB64Url(JSON.stringify(payload));
+      const base = `${location.origin}${location.pathname}`;
+      return `${base}#prefill=${packed}`;
+    }
+
+    function applyCustomerMode() {
+      isCustomerMode = true;
+      document.body.classList.add("customerMode");
+
+      // Keep reset available for you, but it will wipe customer state too.
+      // Lock these in case right panel is ever shown (responsive oddities)
+      panelSelect.disabled = true;
+      csidInput.readOnly = true;
+      regInput.readOnly = true;
+      serviceInput.readOnly = true;
+    }
+
+    function applyPrefill(payload) {
+      if (payload.panel) state.panel_type = String(payload.panel).toLowerCase();
+      if (payload.csid) state.csid = String(payload.csid).trim();
+      if (payload.reg) state.registration_code = String(payload.reg).trim();
+      if (payload.service) state.service_number = String(payload.service).trim();
+
+      saveState();
+      applyCustomerMode();
+    }
+
+    function tryPrefillFromUrl() {
+      const hash = location.hash || "";
+      const m = hash.match(/prefill=([^&]+)/);
+      if (m && m[1]) {
+        try {
+          const payload = JSON.parse(decodeB64Url(m[1]));
+          applyPrefill(payload);
+          return true;
+        } catch {}
+      }
+
+      // Querystring fallback (optional)
+      const sp = new URLSearchParams(location.search);
+      if ([...sp.keys()].length) {
+        const payload = {
+          panel: sp.get("panel") || "",
+          csid: sp.get("csid") || "",
+          reg: sp.get("reg") || "",
+          service: sp.get("service") || ""
+        };
+        if (payload.panel || payload.csid || payload.reg || payload.service) {
+          applyPrefill(payload);
+          return true;
+        }
+      }
+      return false;
+    }
+
+    /** ====== Rendering ====== */
+    function render() {
+      const step = getStep(state.current_step_id);
+      const panelLabel = state.panel_type ? (state.panel_type === "skycontrol" ? "SkyControl" : "SmartHub") : "Not set";
+      panelPill.textContent = panelLabel;
+      stepPill.textContent = `${step?.id || "—"} • ${step?.name || ""}`;
+
+      // Right panel fields (hidden in customer mode, but keep in sync)
+      panelSelect.value = state.panel_type || "";
+      csidInput.value = state.csid || "";
+      regInput.value = state.registration_code || "";
+      serviceInput.value = state.service_number || "";
+
+      // Customer CSID pill
+      csidOnlyText.textContent = state.csid ? state.csid : "—";
+
+      const msg = step ? interpolateStepMessage(step) : "Step not found.";
+      botMessageEl.textContent = msg;
+
+      buildIssuesMenu(step);
+
+      // Helpful nudge (hide this in customer mode to reduce clutter if you want)
+      const targetId = stepTarget(state.current_step_id);
+      const targetName = SCREENS_BY_ID[targetId]?.name || targetId;
+
+      if (state.current_step_id !== "step_0") {
+        // In customer mode, keep it short
+        if (isCustomerMode) {
+          showInfo(`If you get lost, tap “Help me find the right screen”.`);
+        } else {
+          showInfo(`You should be on: ${targetName}\nIf you’re not sure, tap “Help me find the right screen”.`);
+        }
+      } else {
+        clearHelper();
+      }
+
+      if (!state.panel_type && state.current_step_id !== "step_0") {
+        setStatus(isCustomerMode ? "" : "Please choose your panel type on the right.");
+      } else {
+        setStatus("");
+      }
+    }
+
+    function buildIssuesMenu(step) {
+      issuesMenuEl.innerHTML = "";
+      if (!step) return;
+
+      // Step 0 uses choices instead of issues
+      if (step.ui?.choices?.length) {
+        const title = document.createElement("div");
+        title.className = "muted small";
+        title.style.marginBottom = "8px";
+        title.textContent = "Choose one:";
+        issuesMenuEl.appendChild(title);
+
+        step.ui.choices.forEach(item => {
+          const btn = document.createElement("button");
+          btn.textContent = item.label;
+          btn.onclick = () => withLoading(() => {
+            item.action(state);
+            issuesMenuEl.classList.remove("open");
+          });
+          issuesMenuEl.appendChild(btn);
+        });
+        return;
+      }
+
+      if (!step.ui?.issues?.length) return;
+      const title = document.createElement("div");
+      title.className = "muted small";
+      title.style.marginBottom = "8px";
+      title.textContent = "Choose the issue you’re seeing:";
+      issuesMenuEl.appendChild(title);
+
+      step.ui.issues.forEach(item => {
+        const btn = document.createElement("button");
+        btn.textContent = item.label;
+        btn.onclick = () => withLoading(() => {
+          handleIntent(item.id);
+          issuesMenuEl.classList.remove("open");
+        });
+        issuesMenuEl.appendChild(btn);
+      });
+    }
+
+    /** ====== Return-to-step helper (after troubleshooting or routing) ====== */
+    function showReturnToStepHelper(customTopText) {
+      const top = customTopText || "After you do that:";
+      helperPanel.innerHTML = `
+        <div class="ok">
+          <div style="font-weight:600; margin-bottom:8px;">${escapeHtml(top)}</div>
+          <div class="row" style="margin-top:8px;">
+            <button class="primary" id="backToStepBtn">🔁 Back to step instructions</button>
+            <button class="ghost" id="stayHereBtn">Stay on this message</button>
+          </div>
+          <div class="muted small" style="margin-top:8px;">
+            When you complete the original step, tap Done to continue.
+          </div>
+        </div>
+      `;
+
+      document.getElementById("backToStepBtn").onclick = () => withLoading(() => {
+        const step = getStep(state.return_step_id || state.current_step_id);
+        const restore = state.return_step_message || (step ? interpolateStepMessage(step) : botMessageEl.textContent);
+        botMessageEl.textContent = restore;
+        showInfo("You’re back on the step instructions. Complete the step, then tap Done.");
+      }, 450);
+
+      document.getElementById("stayHereBtn").onclick = () => {
+        showInfo("Okay — follow the message above. When ready, use “Back to step instructions”.");
+      };
+    }
+
+    /** ====== Intent handling (always returns to the step afterwards) ====== */
+    function handleIntent(intentId) {
+      const step = getStep(state.current_step_id);
+      const intent = step?.intents?.find(i => i.id === intentId);
+      if (!intent) { showAlert("No message found for that option."); return; }
+
+      // Save original step message so they can return after troubleshooting
+      state.return_step_id = state.current_step_id;
+      state.return_step_message = interpolateStepMessage(step);
+      saveState();
+
+      let response = intent.response;
+      if (typeof response === "function") response = response();
+
+      botMessageEl.textContent = response;
+      showReturnToStepHelper("After you try that fix:");
+    }
+
+    /** ====== Screen finder (routes from current screen -> target screen for this step) ====== */
+    function openScreenFinder() {
+      const stepId = state.current_step_id;
+      const targetId = stepTarget(stepId);
+      const targetName = SCREENS_BY_ID[targetId]?.name || targetId;
+
+      // Save return-to-step state so they can come back to the original step instructions
+      const step = getStep(stepId);
+      state.return_step_id = stepId;
+      state.return_step_message = step ? interpolateStepMessage(step) : botMessageEl.textContent;
+      saveState();
+
+      // Prefer screens used in this step first, then common screens
+      const used = (SCREEN_MAP.screens || [])
+        .filter(s => Array.isArray(s.used_in_steps) && s.used_in_steps.includes(stepId))
+        .map(s => s.id);
+
+      const common = ["home", "support", "installer_toolbox", "system_testing", "users"];
+      const options = Array.from(new Set([...used, ...common, ...(SCREEN_MAP.screens || []).map(s => s.id)]))
+        .filter(id => SCREENS_BY_ID[id]);
+
+      helperPanel.innerHTML = `
+        <div class="ok">
+          <div style="font-weight:600; margin-bottom:8px;">Let’s get you to the correct screen.</div>
+          <div class="muted small" style="margin-bottom:10px;">
+            Where are you right now? We’ll guide you to: <b>${escapeHtml(targetName)}</b>
+          </div>
+          <div id="screenChoiceList"></div>
+        </div>
+      `;
+
+      const list = document.getElementById("screenChoiceList");
+      options.forEach(id => {
+        const btn = document.createElement("button");
+        btn.style.width = "100%";
+        btn.style.textAlign = "left";
+        btn.style.marginBottom = "8px";
+        btn.textContent = `📍 ${SCREENS_BY_ID[id].name}`;
+        btn.onclick = () => withLoading(() => {
+          const path = findPath(id, targetId);
+          const route = buildRouteText(path);
+          botMessageEl.textContent =
+            `Follow these steps to get to the correct screen (${targetName}):\n\n${route}\n\nWhen you arrive at “${targetName}”, tap “Back to step instructions” and complete the step.`;
+          showReturnToStepHelper("Once you’re on the correct screen:");
+        }, 550);
+        list.appendChild(btn);
+      });
+    }
+
+    /** ====== Button handlers ====== */
+    document.getElementById("doneBtn").onclick = () => withLoading(() => {
+      const idx = FLOW.steps.findIndex(s => s.id === state.current_step_id);
+      if (idx < 0) return;
+      const next = FLOW.steps[idx + 1];
+      if (!next) { showInfo("All set — you’re finished."); return; }
+      gotoStep(next.id);
+    });
+
+    document.getElementById("issuesBtn").onclick = () => {
+      const step = getStep(state.current_step_id);
+      if (!step) return;
+      issuesMenuEl.classList.toggle("open");
+    };
+
+    document.getElementById("lostBtn").onclick = () => withLoading(() => { openScreenFinder(); }, 650);
+
+    document.getElementById("escalateBtn").onclick = () => withLoading(() => {
+      botMessageEl.textContent = escalate("Customer requested a person");
+      showAlert("A team member will assist from here.");
+      showReturnToStepHelper("If you’d like to keep going while we help:");
+    }, 600);
+
+    document.getElementById("copyBtn").onclick = async () => {
+      try { await navigator.clipboard.writeText(botMessageEl.textContent); setStatus("Copied."); }
+      catch { setStatus("Copy failed (browser permissions)."); }
+    };
+
+    document.getElementById("copyEscBtn").onclick = async () => {
+      try { await navigator.clipboard.writeText(escalationTextEl.value); setStatus("Copied escalation message."); }
+      catch { setStatus("Copy failed (browser permissions)."); }
+    };
+
+    document.getElementById("backBtn").onclick = () => withLoading(() => goBackOneStep(), 450);
+
+    document.getElementById("resetBtn").onclick = () => withLoading(() => {
+      localStorage.removeItem(STORAGE_KEY);
+      state = {
+        current_step_id: "step_0",
+        panel_type: "",
+        csid: "",
+        registration_code: "",
+        service_number: "",
+        history: ["step_0"],
+        return_step_id: "step_0",
+        return_step_message: ""
+      };
+      // Leaving customerMode if present (optional). Comment out if you want reset to keep customer mode.
+      isCustomerMode = false;
+      document.body.classList.remove("customerMode");
+
+      render();
+      showInfo("Reset complete.");
+    }, 450);
+
+    panelSelect.onchange = (e) => { state.panel_type = e.target.value; saveState(); render(); };
+    csidInput.oninput = (e) => { state.csid = e.target.value.trim(); saveState(); render(); };
+    regInput.oninput = (e) => { state.registration_code = e.target.value.trim(); saveState(); render(); };
+    serviceInput.oninput = (e) => { state.service_number = e.target.value.trim(); saveState(); };
+
+    // CSID-only copy button (customer mode)
+    copyCsidBtn.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(state.csid || "");
+        setStatus("CSID copied.");
+      } catch {
+        setStatus("Copy failed (browser permissions).");
+      }
+    };
+
+    // Share link buttons (agent mode)
+    makeLinkBtn.onclick = () => {
+      const url = buildShareLinkFromState();
+      shareLinkInput.value = url;
+      copyLinkBtn.disabled = false;
+      setStatus("Link generated.");
+    };
+
+    copyLinkBtn.onclick = async () => {
+      try { await navigator.clipboard.writeText(shareLinkInput.value); setStatus("Link copied."); }
+      catch { setStatus("Copy failed (browser permissions)."); }
+    };
+
+    /** ====== Init ====== */
+    tryPrefillFromUrl();
+    render();
+  </script>
+</body>
+</html>
+
