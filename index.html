@@ -3,196 +3,172 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Guided Setup</title>
+  <title>Guided Panel Setup</title>
 
   <style>
     :root{
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-
-      /* === THEME (TEAL background, black accents, white content) === */
-      --teal: #05E5AF;          /* from your screenshot */
-      --bg: var(--teal);        /* teal page background */
-      --ink: #000000;           /* black accent */
-      --surface: #FFFFFF;       /* white cards */
-      --surface2: #F6F7F9;      /* soft gray */
-      --text: #0B0F14;          /* dark text on white */
-      --muted: #4B5563;
-      --border: rgba(0,0,0,.14);
-      --shadow: 0 14px 40px rgba(0,0,0,.25);
-      --radius: 16px;
+      --teal:#05E5AF;
+      --bg: linear-gradient(135deg,#05E5AF 0%,#02c999 100%);
+      --ink:#071014;
+      --surface:#fff;
+      --surface2:#F6F7F9;
+      --text:#0B0F14;
+      --muted:#4B5563;
+      --shadow:0 18px 48px rgba(0,0,0,.22);
+      --radius:18px;
+      --red:#E53935;
+      --orange:#FF8A00;
+      --blue:#35A7FF;
+      --green:#19C37D;
+      --yellow:#FFD84D;
     }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);min-height:100vh}
+    .wrap{max-width:1260px;margin:0 auto;padding:18px}
+    .grid{display:grid;grid-template-columns:minmax(0,1.02fr) minmax(390px,.98fr);gap:16px;align-items:start}
+    .card{background:var(--surface);color:var(--text);border:2px solid rgba(0,0,0,.10);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+    h1{font-size:20px;margin:0;letter-spacing:-.2px}
+    h2{font-size:13px;margin:0 0 10px;color:var(--muted);letter-spacing:.2px;text-transform:uppercase}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .topbar{justify-content:space-between;margin-bottom:14px}
+    .topbarTitle{color:var(--ink);font-weight:900}
+    .topbarSub{font-size:13px;color:rgba(0,0,0,.72);margin-top:2px}
 
-    body{
-      margin:0;
-      background: var(--bg);
-      color: var(--ink);
+    button,select,input,textarea{
+      background:#fff;color:var(--ink);border:1px solid rgba(0,0,0,.22);
+      border-radius:12px;padding:12px 14px;font-size:15px;
+      box-shadow:0 1px 0 rgba(0,0,0,.03);font-family:inherit
     }
+    button{cursor:pointer;transition:transform .08s ease,border-color .15s ease,background .15s ease}
+    button:hover{border-color:rgba(0,0,0,.38)}
+    button:active{transform:translateY(1px)}
+    button:disabled{opacity:.45;cursor:not-allowed}
+    button.primary{background:var(--ink);border-color:rgba(0,0,0,.65);color:var(--teal);font-weight:850}
+    button.secondary{background:var(--surface2)}
+    button.danger{background:#fff;color:#000;border-color:rgba(229,57,53,.75)}
+    button.ghost{background:rgba(255,255,255,.58);color:var(--ink);border:1px solid rgba(0,0,0,.22)}
+    button.mini{font-size:12px;padding:7px 10px;border-radius:999px}
 
-    .wrap{ max-width:1100px; margin:0 auto; padding:18px; }
-    .grid{ display:grid; grid-template-columns: 1.2fr 0.8fr; gap:14px; }
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:7px 11px;border-radius:999px;border:1px solid rgba(0,0,0,.18);background:rgba(255,255,255,.70);color:var(--ink)}
+    .card .pill{background:var(--surface2)}
+    .muted{color:var(--muted)}
+    .small{font-size:12px}
+    .divider{height:1px;background:rgba(0,0,0,.10);margin:14px 0}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;font-size:12px}
 
-    /* Cards are WHITE with BLACK accents */
-    .card{
-      background: var(--surface);
-      color: var(--text);
-      border: 2px solid rgba(0,0,0,.10);
-      border-radius: var(--radius);
-      padding: 14px;
-      box-shadow: var(--shadow);
-    }
+    .progressShell{margin:0 0 14px}
+    .progressMeta{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--muted);margin-bottom:6px}
+    .progressBar{height:10px;background:#E9EDF0;border-radius:999px;overflow:hidden}
+    .progressFill{height:100%;width:0%;background:#000;border-radius:999px;transition:width .25s ease}
 
-    h1{ font-size:18px; margin:0; }
-    h2{ font-size:14px; margin:0 0 10px; color: var(--muted); letter-spacing:.2px; }
-    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-
-    /* Top bar on teal background */
-    .topbarTitle{ color: var(--ink); font-weight: 900; }
-    .topbarPills .pill{
-      background: rgba(255,255,255,.65);
-      border-color: rgba(0,0,0,.18);
-      backdrop-filter: blur(2px);
-    }
-    .topbarPills strong{ color: var(--ink); }
-    button.ghost{
-      background: rgba(0,0,0,.08);
-      color: var(--ink);
-      border: 1px solid rgba(0,0,0,.22);
-    }
-    button.ghost:hover{ background: rgba(0,0,0,.12); border-color: rgba(0,0,0,.28); }
-
-    /* Inputs/buttons on white cards */
-    button, select, input, textarea{
-      background: #FFFFFF;
-      color: var(--ink);
-      border: 1px solid rgba(0,0,0,.22);
-      border-radius: 12px;
-      padding: 12px 14px;
-      font-size: 15px;
-      box-shadow: 0 1px 0 rgba(0,0,0,.03);
-    }
-    button{ cursor:pointer; }
-    button:hover{ border-color: rgba(0,0,0,.35); }
-
-    button.primary{
-      background: var(--ink);
-      border-color: rgba(0,0,0,.65);
-      color: var(--teal);
-      font-weight: 800;
-    }
-    button.primary:hover{ filter: brightness(.95); }
-
-    button.danger{
-      background:#FFFFFF;
-      color:#000;
-      border-color: rgba(229, 57, 53, .75);
-    }
-    button.danger:hover{ border-color: rgba(229, 57, 53, 1); }
-
-    button:disabled{ opacity:.45; cursor:not-allowed; }
-
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:6px 10px;
-      border-radius:999px;
-      border:1px solid rgba(0,0,0,.18);
-      background: var(--surface2);
-      color: var(--ink);
-    }
-    .muted{ color: var(--muted); }
-    .divider{ height:1px; background: rgba(0,0,0,.10); margin:12px 0; }
-    .menu{ display:none; margin-top:10px; }
-    .menu.open{ display:block; }
-    .menu button{ width:100%; text-align:left; margin-bottom: 8px; }
-
-    .status{ font-size:12px; color: rgba(0,0,0,.75); }
-
-    /* BIG message area (white box, black text, black accent border) */
-    .bigWrap{
-      border: 2px solid rgba(0,0,0,.55);
-      background: #FFFFFF;
-      border-radius: 14px;
-      padding: 14px;
-      min-height: 340px;
-      display:flex;
-      box-shadow: inset 0 0 0 1px rgba(0,0,0,.03);
-    }
-    .big{
-      font-size:16px;
-      line-height:1.55;
-      white-space:pre-wrap;
-      width:100%;
-      overflow:auto;
-      color:#000;
-    }
-
-    .flash{ animation: flash 900ms ease-out; }
+    .bigWrap{border:2px solid rgba(0,0,0,.55);background:#fff;border-radius:16px;padding:15px;min-height:310px;display:flex;box-shadow:inset 0 0 0 1px rgba(0,0,0,.03)}
+    .big{font-size:16px;line-height:1.55;white-space:pre-wrap;width:100%;overflow:auto;color:#000}
+    .flash{animation:flash 900ms ease-out}
     @keyframes flash{
-      0%   { box-shadow: 0 0 0 0 rgba(0,0,0,0); transform: scale(1); }
-      15%  { box-shadow: 0 0 0 6px rgba(0,0,0,.12); }
-      35%  { box-shadow: 0 0 0 10px rgba(0,0,0,.08); }
-      100% { box-shadow: 0 0 0 0 rgba(0,0,0,0); transform: scale(1); }
+      0%{box-shadow:0 0 0 0 rgba(0,0,0,0);transform:scale(1)}
+      15%{box-shadow:0 0 0 6px rgba(0,0,0,.12)}
+      35%{box-shadow:0 0 0 10px rgba(0,0,0,.08)}
+      100%{box-shadow:0 0 0 0 rgba(0,0,0,0);transform:scale(1)}
     }
 
-    .alert{ border:1px solid rgba(229,57,53,.65); background: rgba(229,57,53,.08); padding: 10px 12px; border-radius: 12px; }
-    .ok{ border:1px solid rgba(0,0,0,.55); background: rgba(5,229,175,.18); padding: 10px 12px; border-radius: 12px; }
+    .alert{border:1px solid rgba(229,57,53,.65);background:rgba(229,57,53,.08);padding:10px 12px;border-radius:12px}
+    .ok{border:1px solid rgba(0,0,0,.55);background:rgba(5,229,175,.18);padding:10px 12px;border-radius:12px}
+    .menu{display:none;margin-top:10px}
+    .menu.open{display:grid;grid-template-columns:1fr;gap:8px}
+    .menu button{width:100%;text-align:left}
+    .status{font-size:12px;color:rgba(0,0,0,.75)}
+    .rightcol textarea{min-height:160px;width:100%}
+    .actionBar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+    .tempReturnRow{display:none;margin-top:10px}
+    .utilityBar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 
-    .small{ font-size: 12px; }
-    .rightcol textarea{ min-height: 190px; }
-    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 12px; }
+    .visualCard{position:sticky;top:14px;overflow:hidden}
+    .visualHead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:10px}
+    .screenTitle{font-weight:900;font-size:18px}
+    .screenSub{color:var(--muted);font-size:13px;margin-top:2px}
+    .panelStage{background:radial-gradient(circle at 50% 20%,rgba(255,255,255,.86),rgba(255,255,255,.22) 55%,rgba(0,0,0,.05));border:1px solid rgba(0,0,0,.10);border-radius:18px;padding:20px 12px;display:flex;justify-content:center;align-items:center;min-height:320px}
+    .panelDevice{width:min(520px,100%);aspect-ratio:1.55/1;background:#eef0f1;border-radius:30px;border:3px solid #d9dcde;box-shadow:0 18px 34px rgba(0,0,0,.24),inset 0 0 0 1px rgba(255,255,255,.8);padding:7.5% 6.2%;position:relative}
+    .panelDevice:before{content:"";position:absolute;inset:13.2% 10%;background:#050505;border-radius:8px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+    .panelScreen{position:absolute;inset:15.5% 12.5% 22%;background:#11c79a;border-radius:3px;overflow:hidden;color:white;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
+    .panelLogo{position:absolute;left:50%;bottom:8.4%;transform:translateX(-50%);width:26px;height:4px;border-radius:999px;background:#9da3a6;opacity:.8}
 
-    /* Loading overlay */
-    .overlay{
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,.35);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      z-index: 9999;
-      backdrop-filter: blur(2px);
-    }
-    .overlay.open{ display:flex; }
-    .loaderCard{
-      width: min(440px, 92vw);
-      background:#FFFFFF;
-      color: var(--text);
-      border:2px solid rgba(0,0,0,.12);
-      border-radius: 18px;
-      padding: 16px 18px;
-      box-shadow: var(--shadow);
-      display:flex;
-      gap:14px;
-      align-items:center;
-    }
-    .spinner{
-      width:26px; height:26px;
-      border-radius:999px;
-      border: 3px solid rgba(0,0,0,.12);
-      border-top-color: #000;
-      animation: spin .8s linear infinite;
-      flex:0 0 auto;
-    }
-    @keyframes spin{ to{ transform: rotate(360deg);} }
+    .mockTop{position:absolute;left:0;top:0;right:0;height:18%;padding:3.2% 3.5%;font-size:10px;display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+    .mockBottom{position:absolute;left:0;right:0;bottom:0;height:16%;background:rgba(255,255,255,.94);color:#444;display:flex;align-items:center;justify-content:space-around;font-size:13px}
+    .mockMain{position:absolute;inset:18% 0 16%;padding:4%}
+    .iconDot{width:15px;height:15px;border-radius:999px;background:rgba(255,255,255,.92);display:inline-flex;align-items:center;justify-content:center;color:#0aa77f;font-size:9px;font-weight:900}
+    .screenCircle{width:34%;aspect-ratio:1;border-radius:999px;background:white;color:#08a77f;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:900;margin-left:auto;margin-right:8%;box-shadow:0 5px 13px rgba(0,0,0,.12)}
+    .screenCircle .shield{width:34%;aspect-ratio:1;border:2px solid #09b98e;border-radius:50% 50% 45% 45%;margin-bottom:5px}
+    .screenText{max-width:52%;font-size:11px;line-height:1.3;font-weight:650}
 
-    /* CUSTOMER MODE */
-    .csidOnlyWrap{ display:none; }
-    .customerMode .grid{ grid-template-columns: 1fr; }
-    .customerMode #rightCard{ display:none; }
-    .customerMode .csidOnlyWrap{ display:block; margin-top:10px; }
+    /* The yellow highlight is now placed ON the real mockup element to click, not a guessed floating box. */
+    .clickTarget{position:relative;z-index:5;outline:3px solid var(--yellow);outline-offset:2px;box-shadow:0 0 0 5px rgba(255,216,77,.20),0 0 14px rgba(255,216,77,.34);animation:pulse 1.25s ease-in-out infinite}
+    .mockBottom span.clickTarget,.orangeBtn.clickTarget,.keypad.clickTarget,.sliderTrack.clickTarget{border-radius:999px}
+    .settingsRow.clickTarget,.tile.clickTarget,.listItem.clickTarget,.callBox.clickTarget,.keyboard.clickTarget{border-radius:10px}
+    .panicButtons div.clickTarget,.screenCircle.clickTarget{border-radius:999px}
+    @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
 
-    /* Mobile */
-    @media (max-width: 900px){
-      .wrap{ padding: 12px; }
-      .grid{ grid-template-columns: 1fr; }
-      .row.actions button{ width: 100%; }
-      .row.topbar{ align-items:flex-start; }
-      button, select, input, textarea{ width: 100%; box-sizing: border-box; }
-      .pill{ width:100%; box-sizing:border-box; justify-content: space-between; }
-      .row{ gap: 10px; }
-      .row.compact{ flex-direction: column; align-items: stretch; }
-      .menu button{ padding: 14px; }
-      .bigWrap{ min-height: 420px; }
+    .settingsScreen{background:#f3f5f7;color:#111}
+    .sideNav{position:absolute;left:0;top:0;bottom:0;width:34%;background:#f6f7f9;border-right:1px solid #ddd;padding:8% 3%;display:flex;flex-direction:column;gap:5px;font-size:9.5px}
+    .sideNav div{padding:6px 5px;border-radius:6px}
+    .sideNav .active{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.09);font-weight:800}
+    .settingsContent{position:absolute;left:34%;right:0;top:0;bottom:0;padding:6% 5%;font-size:9.5px}
+    .settingsRow{border-bottom:1px solid #ddd;padding:6px 0;display:flex;justify-content:space-between;gap:4px;align-items:center}
+    .tileGrid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+    .tile{background:white;border:1px solid #ddd;border-radius:7px;padding:7px 5px;min-height:30px;font-size:9px;display:flex;align-items:center}
+    .pinScreen{background:#f5f6f7;color:#111;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:10px}
+    .pinDots{display:flex;gap:6px}
+    .pinDots span{width:10px;height:10px;border-radius:999px;border:1.5px solid #666;background:white}
+    .keypad{display:grid;grid-template-columns:repeat(3,22px);gap:5px}
+    .keypad span{height:20px;border-radius:999px;background:white;display:flex;align-items:center;justify-content:center;border:1px solid #ddd;font-size:9px}
+    .keyboard{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;margin-top:8px}
+    .keyboard span{background:#fff;border:1px solid #ddd;border-radius:3px;height:14px;font-size:7px;display:flex;align-items:center;justify-content:center}
+    .listScreen{background:#f3f5f7;color:#111}
+    .listTitle{font-size:10px;font-weight:900;margin-bottom:5px}
+    .listItem{background:white;border:1px solid #ddd;border-radius:7px;padding:7px;margin-bottom:5px;font-size:9px;display:flex;justify-content:space-between;align-items:center}.scrollHint{font-size:8px;color:#666;text-align:center;margin:3px 0 5px}.miniDivider{height:1px;background:#ddd;margin:4px 0}
+    .orangeBtn{background:#FF8A00;color:white;border-radius:8px;padding:5px 8px;font-size:8px;font-weight:800}
+    .callStatus{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#111}
+    .callBox{width:62%;height:38%;border-radius:10px;background:white;border:1px solid #ddd;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:11px;text-align:center}
+    .panicScreen{background:#f5f6f7;color:#111}
+    .panicButtons{display:flex;justify-content:center;gap:10px;align-items:center;height:100%}
+    .panicButtons div{width:22%;aspect-ratio:1;border-radius:999px;color:white;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:900;box-shadow:0 4px 10px rgba(0,0,0,.18)}
+    .alarmScreen{background:#cf2028;color:white}
+    .alarmKeypad{position:absolute;right:6%;top:17%;display:grid;grid-template-columns:repeat(3,22px);gap:5px}
+    .alarmKeypad span{height:20px;border-radius:999px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font-size:9px}
+    .armSlider{height:100%;display:flex;align-items:center;justify-content:center;gap:15px;color:#111}
+    .sliderTrack{width:48%;height:34px;border-radius:999px;background:#fff;border:1px solid #ddd;position:relative}
+    .sliderKnob{width:32px;height:32px;border-radius:999px;background:#fff;border:2px solid #111;position:absolute;left:4px;top:0}
+    .greenScreen{background:#19C37D;color:white}
+    .screenTools{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:10px}
+    .screenDots{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+    .screenDot{width:9px;height:9px;border-radius:999px;background:#D5DBDE}
+    .screenDot.active{background:#000}
+    .checklist{margin-top:12px;display:grid;gap:8px}
+    .checkItem{border:1px solid rgba(0,0,0,.12);background:#fff;border-radius:12px;padding:9px 10px;display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.35}
+    .checkIcon{width:20px;height:20px;flex:0 0 auto;border-radius:999px;background:#ECFDF7;color:#087c60;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px}
+    .agentCollapsed #agentBody{display:none}
+    .agentHeader{display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .csidOnlyWrap{display:none}
+    .customerMode .grid{grid-template-columns:1fr minmax(370px,.92fr)}
+    .customerMode #rightCard{display:none}
+    .customerMode .csidOnlyWrap{display:block;margin-top:10px}
+
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(2px)}
+    .overlay.open{display:flex}
+    .loaderCard{width:min(440px,92vw);background:#fff;color:var(--text);border:2px solid rgba(0,0,0,.12);border-radius:18px;padding:16px 18px;box-shadow:var(--shadow);display:flex;gap:14px;align-items:center}
+    .spinner{width:26px;height:26px;border-radius:999px;border:3px solid rgba(0,0,0,.12);border-top-color:#000;animation:spin .8s linear infinite;flex:0 0 auto}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    @media (max-width:980px){
+      .wrap{padding:12px}
+      .grid,.customerMode .grid{grid-template-columns:1fr}
+      .visualCard{position:static;order:-1}
+      .actionBar{grid-template-columns:1fr}
+      .row.compact{flex-direction:column;align-items:stretch}
+      button,select,input,textarea{width:100%}
+      .pill{width:100%;justify-content:space-between}
+      .bigWrap{min-height:340px}
+      .panelStage{min-height:270px;padding:14px 6px}
     }
   </style>
 </head>
@@ -201,7 +177,7 @@
   <div class="overlay" id="overlay">
     <div class="loaderCard">
       <div class="spinner"></div>
-      <div style="display:flex; flex-direction:column; gap:6px;">
+      <div style="display:flex;flex-direction:column;gap:6px;">
         <div style="font-weight:900;">One moment…</div>
         <div class="muted small">Preparing the next message.</div>
       </div>
@@ -209,10 +185,12 @@
   </div>
 
   <div class="wrap">
-    <div class="row topbar" style="justify-content: space-between;">
-      <h1 class="topbarTitle">Guided Setup</h1>
-
-      <div class="row compact topbarPills">
+    <div class="row topbar">
+      <div>
+        <h1 class="topbarTitle">Guided Panel Setup</h1>
+        <div class="topbarSub">Step-by-step activation with a visual panel guide.</div>
+      </div>
+      <div class="row compact">
         <span class="pill">Panel: <strong id="panelPill">Not set</strong></span>
         <span class="pill">Step: <strong id="stepPill">—</strong></span>
         <button class="ghost" id="resetBtn">Reset</button>
@@ -220,10 +198,16 @@
     </div>
 
     <div class="grid">
-      <!-- LEFT -->
-      <div class="card">
-        <h2>Message</h2>
+      <main class="card">
+        <div class="progressShell">
+          <div class="progressMeta">
+            <span id="progressLabel">Step 1 of 6</span>
+            <span id="progressName">Main screen check</span>
+          </div>
+          <div class="progressBar"><div class="progressFill" id="progressFill"></div></div>
+        </div>
 
+        <h2>Current instruction</h2>
         <div class="bigWrap" id="bigWrap">
           <div id="botMessage" class="big"></div>
         </div>
@@ -238,121 +222,565 @@
 
         <div class="divider"></div>
 
-        <div class="row actions">
+        <div class="actionBar">
           <button class="primary" id="doneBtn">✅ Done</button>
-          <button id="issuesBtn">⚠️ I’m having an issue</button>
-          <button id="lostBtn">🧭 I can’t find that screen</button>
-          <button class="danger" id="escalateBtn">🚨 I need help from a person</button>
+          <button id="issuesBtn">⚠️ Issue</button>
+          <button id="lostBtn">🧭 Lost</button>
+          <button class="danger" id="escalateBtn">🚨 Person</button>
+        </div>
+
+        <div class="tempReturnRow" id="tempReturnRow">
+          <button class="primary" id="triedFixBtn">✅ I tried that</button>
         </div>
 
         <div id="issuesMenu" class="menu"></div>
 
         <div class="divider"></div>
-        <div class="row compact">
-          <button id="copyBtn">📋 Copy message</button>
-          <button id="backBtn">⬅️ Back one step</button>
+
+        <div class="utilityBar">
+          <button id="copyBtn" class="secondary">📋 Copy message</button>
+          <button id="backBtn" class="secondary">⬅️ Back one step</button>
           <span class="status" id="statusLine"></span>
         </div>
 
         <div id="helperPanel" style="margin-top:12px;"></div>
-      </div>
+      </main>
 
-      <!-- RIGHT -->
-      <div class="card rightcol" id="rightCard">
-        <h2>Setup Details (Agent)</h2>
-
-        <div class="row compact">
-          <label class="pill">
-            Panel type:
-            <select id="panelSelect">
-              <option value="">Select…</option>
-              <option value="smarthub">SmartHub</option>
-              <option value="skycontrol">SkyControl</option>
-            </select>
-          </label>
+      <aside class="card visualCard">
+        <div class="visualHead">
+          <div>
+            <div class="screenTitle" id="screenTitle">Panel preview</div>
+            <div class="screenSub" id="screenSub">Shows what the customer should look for.</div>
+          </div>
+          <span class="pill small">Visual guide</span>
         </div>
 
-        <div class="divider"></div>
-
-        <h2>Information</h2>
-        <div class="row compact">
-          <label class="pill">CSID: <input id="csid" placeholder="EZ123456" /></label>
-          <label class="pill">Registration code: <input id="reg" placeholder="ABCD-EFGH-IJKL-LMNO" /></label>
-        </div>
-        <div class="row compact">
-          <label class="pill">Service # (top-right): <input id="serviceNum" placeholder="Service number…" /></label>
+        <div class="panelStage">
+          <div class="panelDevice" aria-label="Panel mockup">
+            <div class="panelScreen" id="panelScreen"></div>
+            <div class="panelLogo"></div>
+          </div>
         </div>
 
-        <div class="divider"></div>
-
-        <h2>Escalation message</h2>
-        <textarea id="escalationText" class="mono"></textarea>
-        <div class="row compact">
-          <button id="copyEscBtn">📋 Copy escalation</button>
+        <div class="screenTools">
+          <button class="mini secondary" id="prevScreenBtn">← Previous</button>
+          <div class="screenDots" id="screenDots"></div>
+          <button class="mini secondary" id="nextScreenBtn">Next →</button>
         </div>
 
-        <div class="divider"></div>
+        <div class="checklist" id="screenChecklist"></div>
+      </aside>
 
-        <h2>Share</h2>
-        <div class="row compact">
-          <button class="primary" id="makeLinkBtn">🔗 Generate customer link</button>
-          <button id="copyLinkBtn" disabled>📋 Copy link</button>
+      <section class="card rightcol" id="rightCard">
+        <div class="agentHeader">
+          <h2 style="margin:0;">Setup details (Agent)</h2>
+          <button class="mini secondary" id="toggleAgentBtn">Collapse</button>
         </div>
-        <div class="row compact" style="width:100%;">
-          <input id="shareLink" style="width:100%;" placeholder="Link will appear here…" readonly />
+
+        <div id="agentBody">
+          <div class="divider"></div>
+
+          <div class="row compact">
+            <label class="pill">
+              Panel type:
+              <select id="panelSelect">
+                <option value="">Select…</option>
+                <option value="smarthub">SmartHub</option>
+                <option value="skycontrol">SkyControl</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="divider"></div>
+
+          <h2>Information</h2>
+          <div class="row compact">
+            <label class="pill">CSID: <input id="csid" placeholder="EZ123456" /></label>
+            <label class="pill">Registration code: <input id="reg" placeholder="ABCD-EFGH-IJKL-LMNO" /></label>
+          </div>
+          <div class="row compact">
+            <label class="pill">Service # (top-right): <input id="serviceNum" placeholder="Service number…" /></label>
+          </div>
+
+          <div class="divider"></div>
+
+          <h2>Escalation message</h2>
+          <textarea id="escalationText" class="mono"></textarea>
+          <div class="row compact">
+            <button id="copyEscBtn" class="secondary">📋 Copy escalation</button>
+          </div>
+
+          <div class="divider"></div>
+
+          <h2>Share</h2>
+          <div class="row compact">
+            <button class="primary" id="makeLinkBtn">🔗 Generate customer link</button>
+            <button id="copyLinkBtn" disabled>📋 Copy link</button>
+          </div>
+          <div class="row compact" style="width:100%;margin-top:8px;">
+            <input id="shareLink" style="width:100%;" placeholder="Link will appear here…" readonly />
+          </div>
+          <div class="muted small" style="margin-top:6px;">
+            Uses a hash-link so values are not typically sent as referrer data.
+          </div>
         </div>
-        <div class="muted small" style="margin-top:6px;">
-          Tip: Uses a hash-link so values are not typically sent as referrer data.
-        </div>
-      </div>
+      </section>
     </div>
   </div>
 
   <script>
-    const STORAGE_KEY = "vivint_activation_flow_customer_v6";
+    const STORAGE_KEY = "vivint_activation_flow_visual_corrected_twv_to_pin_v1";
     let isCustomerMode = false;
+    let currentScreenIndex = 0;
 
-    function stripDashes(code) { return (code || "").replace(/-/g, ""); }
-
-    function normalizeReg(code) {
-      return (code || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
-    }
-    function formatRegWithDashes(code) {
+    function stripDashes(code){ return (code || "").replace(/-/g,""); }
+    function normalizeReg(code){ return (code || "").toUpperCase().replace(/[^A-Z0-9]/g,""); }
+    function formatRegWithDashes(code){
       const raw = normalizeReg(code);
-      if (!raw) return "";
-      return raw.match(/.{1,4}/g).join("-");
+      return raw ? raw.match(/.{1,4}/g).join("-") : "";
     }
+
+    function targetClass(value, target){ return value === target ? " clickTarget" : ""; }
+
+    function homeScreen(message, status, target = "none"){
+      const circleCls = target === "circle" ? " clickTarget" : "";
+      const dotsCls = target === "dots" ? ' class="clickTarget"' : "";
+      const plusCls = target === "plus" ? ' class="clickTarget"' : "";
+
+      return `
+        <div class="mockTop">
+          <div>Tue 3:42 PM<br><strong>72°</strong></div>
+          <div><span class="iconDot">Wi</span> <span class="iconDot">⚡</span> <span class="iconDot">🔊</span></div>
+        </div>
+        <div class="mockMain">
+          <div class="screenText">${message}</div>
+          <div class="screenCircle${circleCls}"><div class="shield"></div>${status}</div>
+        </div>
+        <div class="mockBottom">
+          <span>🛡×</span><span>72°</span><span>📷</span><span>🔒</span><span${plusCls}>✚</span><span${dotsCls}>•••</span>
+        </div>`;
+    }
+
+    function settingsShell(active, rows, activeSide, targetRow = ""){
+      const side = ["Devices","Users","Security","General","Support"]
+        .map(x => `<div class="${x === activeSide ? "active" : ""}${targetClass(x, targetRow)}">${x}</div>`)
+        .join("");
+
+      const list = rows
+        .map(r => `<div class="settingsRow${targetClass(r, targetRow)}"><span>${r}</span><span>›</span></div>`)
+        .join("");
+
+      return `
+        <div class="settingsScreen" style="position:absolute; inset:0;">
+          <div class="sideNav">${side}</div>
+          <div class="settingsContent">
+            <strong>${active}</strong>
+            ${list}
+          </div>
+        </div>`;
+    }
+
+    function pinScreen(title, hint, target = "keypad"){
+      const keypadCls = target === "keypad" ? " clickTarget" : "";
+      const saveCls = target === "save" ? " clickTarget" : "";
+      const saveRow = target === "save"
+        ? `<div style="display:flex;gap:8px;margin-top:7px;"><span class="orangeBtn${saveCls}">Save</span><span class="orangeBtn" style="background:#777">Cancel</span></div>`
+        : "";
+
+      return `
+        <div class="pinScreen" style="position:absolute; inset:0;">
+          <strong>${title}</strong>
+          <div class="pinDots"><span></span><span></span><span></span><span></span></div>
+          <div class="keypad${keypadCls}">
+            ${[1,2,3,4,5,6,7,8,9,"Clear",0,"Delete"].map(n => `<span>${n}</span>`).join("")}
+          </div>
+          <div class="small muted">${hint}</div>
+          ${saveRow}
+        </div>`;
+    }
+
+    function installerToolbox(targetTile = "Register panel"){
+      const items = ["Zones","Key fobs","Keypads","Smart home devices","Networking","Monitoring and Cellular","Register panel","System testing","Installer","Update","Advanced toolbox"];
+      const backHtml = targetTile === "Back"
+        ? `<span class="clickTarget" style="display:inline-flex;border-radius:999px;padding:2px 7px;margin-right:6px;">← Back</span>`
+        : `<span style="display:inline-flex;padding:2px 7px;margin-right:6px;">← Back</span>`;
+
+      return `
+        <div class="settingsScreen" style="position:absolute; inset:0; padding:5%;">
+          <strong>${backHtml}Installer Toolbox</strong>
+          <div class="tileGrid" style="margin-top:8px;">
+            ${items.map(i => `<div class="tile${targetClass(i, targetTile)}">${i}</div>`).join("")}
+          </div>
+        </div>`;
+    }
+
+    function registerPanel(){
+      return `
+        <div class="listScreen" style="position:absolute; inset:0; padding:6%;">
+          <div class="listTitle">Please enter the registration code</div>
+          <div class="listItem" style="height:28px;">ABCD EFGH IJKL LMNO</div>
+          <div class="keyboard clickTarget">
+            ${"QWERTYUIOPASDFGHJKLZXCVBNM".split("").map(k => `<span>${k}</span>`).join("")}
+          </div>
+          <div style="text-align:right;margin-top:7px;"><span class="orangeBtn clickTarget">Done</span></div>
+        </div>`;
+    }
+
+    function systemTesting(targetRow = "Two-way voice test"){
+      const backHtml = targetRow === "Back"
+        ? `<span class="clickTarget" style="display:inline-flex;border-radius:999px;padding:2px 7px;margin-right:6px;">← Back</span>`
+        : `<span style="display:inline-flex;padding:2px 7px;margin-right:6px;">← Back</span>`;
+
+      if(targetRow === "Two-way voice test"){
+        const visibleScrolledRows = ["Broadband test","Cellular test","Two-way voice test","Sensor health check"];
+        return `
+          <div class="listScreen" style="position:absolute; inset:0; padding:5%;">
+            <div class="listTitle">${backHtml}Settings / System Testing</div>
+            <div class="scrollHint">Scroll down ↓</div>
+            <div class="miniDivider"></div>
+            ${visibleScrolledRows.map(r => `
+              <div class="listItem${targetClass(r, targetRow)}">
+                ${r}
+                <span>›</span>
+              </div>`).join("")}
+          </div>`;
+      }
+
+      const rows = ["Sounder","Test Mode","Auto advance tests","Installer test","Broadband test","Cellular test","Two-way voice test","Sensor health check","Z-Wave diagnostics"];
+
+      return `
+        <div class="listScreen" style="position:absolute; inset:0; padding:5%;">
+          <div class="listTitle">${backHtml}Settings / System Testing</div>
+          ${rows.map((r,i) => `
+            <div class="listItem${targetClass(r, targetRow)}">
+              ${r}
+              <span>${i < 3 ? "○" : "›"}</span>
+            </div>`).join("")}
+        </div>`;
+    }
+
+    function twoWayVoice(target = "start"){
+      const backHtml = target === "back"
+        ? `<span class="clickTarget" style="display:inline-flex;border-radius:999px;padding:2px 7px;margin-right:6px;">← Back</span>`
+        : `<span style="display:inline-flex;padding:2px 7px;margin-right:6px;">← Back</span>`;
+      const startCls = target === "start" ? " clickTarget" : "";
+
+      return `
+        <div class="listScreen" style="position:absolute; inset:0; padding:5%;">
+          <div class="listTitle">${backHtml}System Tests / Two-way Voice Test</div>
+          <div class="listItem">
+            <strong>Ready for test</strong>
+            <span class="orangeBtn${startCls}">Start test</span>
+          </div>
+          <div class="listItem">Modem status <span>Ready</span></div>
+          <div class="listItem">CSID <span>${state.csid || "EZ123456"}</span></div>
+          <div class="listItem">Advanced cellular status <span>›</span></div>
+        </div>`;
+    }
+
+    function twoWayCall(){
+      return `
+        <div class="listScreen" style="position:absolute; inset:0;">
+          <div class="callStatus">
+            <div class="callBox">Two-way Call<br><span class="muted">Connecting…</span></div>
+            <span class="orangeBtn clickTarget">End Call</span>
+          </div>
+        </div>`;
+    }
+
+    function monitoringStation(){
+      return `
+        <div class="listScreen" style="position:absolute; inset:0; padding:7%;">
+          <div class="callStatus">
+            <div class="callBox">Vivint Monitoring Station</div>
+            <span class="orangeBtn clickTarget">Hide Call</span>
+          </div>
+        </div>`;
+    }
+
+    function usersScreen(){
+      return settingsShell("Users", ["Duress User","Primary Admin User","Add new user"], "Users", "Primary Admin User");
+    }
+
+    function customerUserScreen(){
+      return settingsShell("Primary Admin User", ["Name","Admin","PIN","Email","Phone","Send invitation"], "Users", "PIN");
+    }
+
+    function panicMenu(){
+      return `
+        <div class="panicScreen" style="position:absolute; inset:0;">
+          <div class="panicButtons">
+            <div class="clickTarget" style="background:var(--blue);">PANIC</div>
+            <div style="background:var(--red);">EMERGENCY</div>
+            <div style="background:var(--orange);">FIRE</div>
+          </div>
+          <div class="mockBottom"><span>🛡×</span><span>72°</span><span>📷</span><span>🔒</span><span>✚</span><span>•••</span></div>
+        </div>`;
+    }
+
+    function panicAlarm(){
+      return `
+        <div class="alarmScreen" style="position:absolute; inset:0; padding:7%;">
+          <strong>Alarm in progress</strong><br>
+          <span class="small">Enter PIN to silence alarm.</span><br><br>
+          <strong>Panic: Panel</strong>
+          <div class="alarmKeypad clickTarget">
+            ${[1,2,3,4,5,6,7,8,9,"Clr",0,"Del"].map(n => `<span>${n}</span>`).join("")}
+          </div>
+        </div>`;
+    }
+
+    function recentAlarms(){
+      return `
+        <div class="listScreen" style="position:absolute; inset:0; padding:5%;">
+          <div class="listTitle">
+            Recent Alarms
+            <span class="clickTarget" style="float:right;border-radius:999px;padding:1px 4px;">✕</span>
+            <span style="float:right;margin-right:8px;">🗑</span>
+          </div>
+          <div class="listItem">
+            <span>🟠 Panic: Panel<br><span class="muted">The panic button was pressed - Just now</span></span>
+          </div>
+        </div>`;
+    }
+
+    function dragToArm(){
+      return `
+        <div class="listScreen" style="position:absolute; inset:0;">
+          <div class="armSlider">
+            <div><strong>Drag to arm your home</strong><br><span class="small muted">Stay ←  → Away</span></div>
+            <div class="sliderTrack clickTarget"><div class="sliderKnob"></div></div>
+          </div>
+        </div>`;
+    }
+
+    function armingCountdown(){
+      return `
+        <div class="greenScreen" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center;">
+          <div class="clickTarget" style="border-radius:14px;padding:8px 14px;">
+            <strong>Your home is now secure.</strong><br><br>Arming in 25 seconds
+          </div>
+        </div>`;
+    }
+
+    function disarmDrag(){
+      return `
+        <div class="listScreen" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center;">
+          <div>
+            <strong>Drag to disarm your home</strong><br><br>
+            <div class="clickTarget" style="height:88px;width:34px;background:#fff;border-radius:999px;border:1px solid #ddd;margin:auto;position:relative;">
+              <div style="position:absolute;left:1px;top:3px;width:30px;height:30px;border-radius:999px;background:#fff;border:2px solid #111;"></div>
+            </div>
+            <br><span>🛡× Disarm</span>
+          </div>
+        </div>`;
+    }
+
+    const SCREEN_MAP = {
+      home_check: {
+        title:"Home Screen",
+        subtitle:"Use this screen to verify power, date, and time.",
+        checks:["Date and time should be visible in the top-left.","The panel should be powered on and responsive.","The main status circle should be visible."],
+        render:() => homeScreen("Everything looks good. Your home is ready to arm.","Disarmed","none")
+      },
+      home_dots: {
+        title:"Home Screen",
+        subtitle:"Tap the 3 dots in the bottom-right.",
+        checks:["Date and time should be visible in the top-left.","The large white circle should show Disarmed or Armed status.","Tap the 3 dots at the bottom-right to open settings."],
+        render:() => homeScreen("Everything looks good. Your home is ready to arm.","Disarmed","dots")
+      },
+      home_plus: {
+        title:"Home Screen",
+        subtitle:"Tap the white plus / medical icon on the bottom bar.",
+        checks:["Start from the Home Screen.","Look for the plus/cross icon on the bottom bar.","Tap the plus/cross icon to open Panic, Emergency, and Fire."],
+        render:() => homeScreen("Everything looks good. Your home is ready to arm.","Disarmed","plus")
+      },
+      home_arm: {
+        title:"Home Screen",
+        subtitle:"Tap the large Disarmed circle to arm the system.",
+        checks:["Start from the Home Screen.","The large white circle should say Disarmed.","Tap the Disarmed circle to open the arming slider."],
+        render:() => homeScreen("Everything looks good. Your home is ready to arm.","Disarmed","circle")
+      },
+      support_software: {
+        title:"Support Screen",
+        subtitle:"Tap Software Version.",
+        checks:["Look for the left menu with Devices, Users, Security, General, Support.","Software Version should show on the right side.","Tap Software Version to open the PIN prompt."],
+        render:() => settingsShell("Support",["Service Number","Software Version","Product Type","support.vivint.com","Customer Care","About"],"Support","Software Version")
+      },
+      pin_for_access: {
+        title:"Enter PIN for access",
+        subtitle:"Enter 2203 on the keypad.",
+        checks:["Title should say Enter your PIN for access.","Enter 2203 unless you were told otherwise.","Cancel goes back if needed."],
+        render:() => pinScreen("Enter your PIN for access","2203","keypad")
+      },
+      installer_toolbox_register: {
+        title:"Installer Toolbox",
+        subtitle:"Tap Register panel.",
+        checks:["Look for Register panel in the toolbox grid.","Tap Register panel to enter the registration code.","System testing is used later for the voice test."],
+        render:() => installerToolbox("Register panel")
+      },
+      installer_toolbox_testing: {
+        title:"Installer Toolbox",
+        subtitle:"Tap System testing.",
+        checks:["Look for System testing in the toolbox grid.","Tap System testing, then scroll down to find Two-Way Voice Test.","Monitoring and Cellular is only for troubleshooting."],
+        render:() => installerToolbox("System testing")
+      },
+      register_panel: {
+        title:"Register Panel",
+        subtitle:"Enter the registration code, then tap Done.",
+        checks:["The screen should ask for the registration code.","Use the code from the instruction message.","Tap Done on the panel when finished."],
+        render:() => registerPanel()
+      },
+      system_testing: {
+        title:"System Testing",
+        subtitle:"Scroll down, then tap Two-way voice test.",
+        checks:["Scroll down until you see Broadband test, Cellular test, Two-way voice test, and Sensor health check.","Two-way voice test should be between Cellular test and Sensor health check.","Tap Two-way voice test to open the screen with Start test."],
+        render:() => systemTesting("Two-way voice test")
+      },
+      twoway_voice_current: {
+        title:"Two-Way Voice Test",
+        subtitle:"Tap Start test.",
+        checks:["Status should say Ready for test or Not ready for test.","Tap Start test to begin the call.","CSID may be shown on this page."],
+        render:() => twoWayVoice("start")
+      },
+      two_way_call: {
+        title:"Two-Way Call",
+        subtitle:"Watch the status, or use End Call if needed.",
+        checks:["Watch for Initializing, Dialing, Connecting, or In call.","If it connects and beeps, say CORRECT CSID.","If it hangs or gets stuck, use the Issue button."],
+        render:() => twoWayCall()
+      },
+      vivint_monitoring_station: {
+        title:"Vivint Monitoring Station",
+        subtitle:"This may appear after the panel connects to an operator.",
+        checks:["If asked, provide the CSID shown in the instruction.","Do not say the CSID is correct unless the test voice prompts for it.","Hide Call minimizes the call."],
+        render:() => monitoringStation()
+      },
+
+      /* Corrected Step 4 normal path */
+      twoway_voice_back: {
+        title:"Two-Way Voice Test",
+        subtitle:"Tap Back once to return to System Testing.",
+        checks:["You should still be on the Two-Way Voice Test screen.","Tap Back once.","That should return you to System Testing."],
+        render:() => twoWayVoice("back")
+      },
+      system_testing_sounder: {
+        title:"System Testing",
+        subtitle:"Make sure Sounder is OFF / gray.",
+        checks:["You should now be on the System Testing screen.","Find Sounder near the top.","Make sure Sounder is OFF / gray before continuing."],
+        render:() => systemTesting("Sounder")
+      },
+      system_testing_back: {
+        title:"System Testing",
+        subtitle:"Tap Back to return to Installer Toolbox.",
+        checks:["After Sounder is off, tap Back.","This should return you to Installer Toolbox.","You are not going back to the Home Screen here."],
+        render:() => systemTesting("Back")
+      },
+      installer_toolbox_back: {
+        title:"Installer Toolbox",
+        subtitle:"Tap Back again to leave Installer Toolbox.",
+        checks:["You should now be on Installer Toolbox.","Tap Back one more time.","That should return you to the Support / settings area."],
+        render:() => installerToolbox("Back")
+      },
+      support_users: {
+        title:"Support / Settings Screen",
+        subtitle:"Tap Users on the left menu.",
+        checks:["After leaving Installer Toolbox, you should be back on the settings area.","Tap Users in the left menu.","Then tap the customer’s name."],
+        render:() => settingsShell("Support",["Service Number","Software Version","Product Type","support.vivint.com","Customer Care","About"],"Support","Users")
+      },
+
+      users: {
+        title:"Users Screen",
+        subtitle:"Tap the customer’s user / Primary Admin User.",
+        checks:["Left menu should be visible.","Tap the user that matches the customer.","Duress User may also appear here."],
+        render:() => usersScreen()
+      },
+      customer_user: {
+        title:"Customer User Screen",
+        subtitle:"Tap the PIN row.",
+        checks:["Tap the PIN row to change the PIN.","Email and phone can be used for app invite.","Send invitation is usually near the bottom."],
+        render:() => customerUserScreen()
+      },
+      pin_entry: {
+        title:"User PIN Entry",
+        subtitle:"Enter the new 4-digit PIN, then tap Save.",
+        checks:["Enter exactly 4 digits.","Tap Save.","If asked to re-enter, type the same PIN again."],
+        render:() => pinScreen("Enter a 4-digit PIN code","","save")
+      },
+      panic_menu: {
+        title:"Panic Menu",
+        subtitle:"Press and hold PANIC for 2 seconds.",
+        checks:["Blue PANIC button should be visible.","Emergency and Fire buttons may also appear.","Hold PANIC for about 2 seconds."],
+        render:() => panicMenu()
+      },
+      panic_alarm: {
+        title:"Panic Alarm In Progress",
+        subtitle:"Enter 2580 or the customer PIN to silence.",
+        checks:["The background turns red.","Enter 2580 first unless your guide says to use the customer PIN.","After disarm, Recent Alarms appears."],
+        render:() => panicAlarm()
+      },
+      recent_alarms: {
+        title:"Recent Alarms",
+        subtitle:"Tap X in the top-right to close.",
+        checks:["Panic: Panel should show in the list.","Tap X in the top-right to close.","Then return to Home for arming test."],
+        render:() => recentAlarms()
+      },
+      drag_to_arm: {
+        title:"Drag to Arm",
+        subtitle:"Drag the slider toward Stay.",
+        checks:["Tap Disarmed from Home first.","Drag toward Stay.","Countdown starts after arming begins."],
+        render:() => dragToArm()
+      },
+      arming_countdown: {
+        title:"Arming Countdown",
+        subtitle:"Wait for the countdown to finish.",
+        checks:["The screen should turn green.","Wait for countdown to finish.","Then tap Armed Stay to disarm."],
+        render:() => armingCountdown()
+      },
+      armed_stay: {
+        title:"Armed Stay",
+        subtitle:"Tap the Armed Stay circle.",
+        checks:["Large circle should say Armed Stay.","Tap it to start disarming.","Then drag down and enter the PIN."],
+        render:() => homeScreen("Everything looks good. Your home is secure while you are home.","Armed Stay","circle")
+      },
+      disarm_drag: {
+        title:"Disarm Drag",
+        subtitle:"Drag down to disarm.",
+        checks:["Drag the white circle down to Disarm.","Enter the new 4-digit PIN.","The panel returns to Disarmed Home."],
+        render:() => disarmDrag()
+      }
+    };
 
     const FLOW = {
       steps: [
         {
-          id: "step_1",
-          name: "Main screen check",
-          message: () => `Please verify:
+          id:"step_1",
+          name:"Main screen check",
+          screen_sequence:["home_check"],
+          message:() => `Please verify:
 1) The panel is powered on
 2) The date and time (top-left) look correct
 
+Use the picture on the right to compare your screen.
+
 When that’s done, tap Done.`,
-          ui: {
-            issues: [
-              { id: "panel_not_on", label: "The panel is not on / screen is black" },
-              { id: "panel_still_not_on_after_power", label: "Still not on after checking power" },
-              { id: "bad_date_time", label: "Date/time are not correct" }
-            ]
-          },
-          intents: [
-            { id: "panel_not_on", response: "Please check that the small white power box below the panel is plugged in, and that both wires are connected securely." },
-            { id: "panel_still_not_on_after_power", response: () => powerCycleForPanel(state.panel_type) },
-            { id: "bad_date_time", response: () => `Let’s reboot the panel:\n\n${rebootForPanel(state.panel_type)}` }
+          ui:{issues:[
+            {id:"panel_not_on",label:"The panel is not on / screen is black"},
+            {id:"panel_still_not_on_after_power",label:"Still not on after checking power"},
+            {id:"bad_date_time",label:"Date/time are not correct"}
+          ]},
+          intents:[
+            {id:"panel_not_on",response:"Please check that the small white power box below the panel is plugged in, and that both wires are connected securely."},
+            {id:"panel_still_not_on_after_power",response:() => powerCycleForPanel(state.panel_type)},
+            {id:"bad_date_time",response:() => `Let’s reboot the panel:\n\n${rebootForPanel(state.panel_type)}`}
           ]
         },
         {
-          id: "step_2",
-          name: "Register the panel",
-          message: () => {
-            const rcRaw = (state.registration_code || "{{registration_code}}");
+          id:"step_2",
+          name:"Register the panel",
+          screen_sequence:["home_dots","support_software","pin_for_access","installer_toolbox_register","register_panel"],
+          message:() => {
+            const rcRaw = state.registration_code || "{{registration_code}}";
             const rcPretty = formatRegWithDashes(rcRaw) || rcRaw;
-
             return `Tap the 3 dots (bottom-right) → Software Version.
 When prompted, enter 2203.
 Tap “Register Panel”.
@@ -360,95 +788,102 @@ Tap “Register Panel”.
 Registration code (type it WITHOUT dashes):
 ${rcPretty}
 
-(Example: you will type it as ${stripDashes(rcPretty)})
+Example: you will type it as ${stripDashes(rcPretty)}
+
+Use the picture on the right if you are not sure what screen you should be on.
 
 When “Registering” goes away, tap Done.`;
           },
-          ui: {
-            issues: [
-              { id: "sim_status_too_old", label: "SIM status is too old" },
-              { id: "dns_error", label: "DNS error / time not synced" },
-              { id: "no_phone_number", label: "No phone number found" },
-              { id: "vivint_services_no_response", label: "Vivint services did not respond" },
-              { id: "code_2203_failed", label: "2203 didn’t work" },
-              { id: "no_register_panel", label: "I don’t see “Register Panel”" }
-            ]
-          },
-          intents: [
-            { id: "sim_status_too_old", response: "Tap Back twice → Monitoring and Cellular → scroll to the bottom → Advanced Cellular Status → scroll to the bottom → Reset Cellular Module. Then tap Back twice and try registering again." },
-            { id: "dns_error", response: () => `Let’s reboot the panel:\n\n${rebootForPanel(state.panel_type)}` },
-            { id: "no_phone_number", response: () => `Let’s reboot the panel:\n\n${rebootForPanel(state.panel_type)}` },
-            { id: "vivint_services_no_response", response: () => `Let’s reboot the panel:\n\n${rebootForPanel(state.panel_type)}` },
-            { id: "no_register_panel", response: "Tap “Monitoring and Cellular” → scroll down → tap “Unregister Panel” → tap “Unregister”. Tap Back and “Register Panel” should appear." },
-            { id: "code_2203_failed", response: () => `Tap Cancel. Please share the Service Number (top-right), then reboot the panel:\n\n${rebootForPanel(state.panel_type)}\n\nAfter it reboots, we’ll try again.` }
+          ui:{issues:[
+            {id:"sim_status_too_old",label:"SIM status is too old"},
+            {id:"dns_error",label:"DNS error / time not synced"},
+            {id:"no_phone_number",label:"No phone number found"},
+            {id:"vivint_services_no_response",label:"Vivint services did not respond"},
+            {id:"code_2203_failed",label:"2203 didn’t work"},
+            {id:"no_register_panel",label:"I don’t see “Register Panel”"}
+          ]},
+          intents:[
+            {id:"sim_status_too_old",response:"Tap Back twice → Monitoring and Cellular → scroll to the bottom → Advanced Cellular Status → scroll to the bottom → Reset Cellular Module. Then tap Back twice and try registering again."},
+            {id:"dns_error",response:() => `Let’s reboot the panel:\n\n${rebootForPanel(state.panel_type)}`},
+            {id:"no_phone_number",response:() => `Let’s reboot the panel:\n\n${rebootForPanel(state.panel_type)}`},
+            {id:"vivint_services_no_response",response:() => `Let’s reboot the panel:\n\n${rebootForPanel(state.panel_type)}`},
+            {id:"no_register_panel",response:"Tap “Monitoring and Cellular” → scroll down → tap “Unregister Panel” → tap “Unregister”. Tap Back and “Register Panel” should appear."},
+            {id:"code_2203_failed",response:() => `Tap Cancel. Please share the Service Number (top-right), then reboot the panel:\n\n${rebootForPanel(state.panel_type)}\n\nAfter it reboots, we’ll try again.`}
           ]
         },
         {
-          id: "step_3",
-          name: "Two-Way Voice Test",
-          message: () => {
-            const csid = state.csid || "{{csid}}";
-            return `Tap “System Testing” → scroll down → tap “Two-Way Voice Test”.
-To START the test, tap “Two-Way Voice Test” one more time (or tap Start Test).
+          id:"step_3",
+          name:"Two-Way Voice Test",
+          screen_sequence:["installer_toolbox_testing","system_testing","twoway_voice_current","two_way_call","vivint_monitoring_station"],
+          message:() => `Tap “System Testing” → scroll down until you see:
+• Broadband test
+• Cellular test
+• Two-Way Voice Test
+• Sensor health check
+
+Tap “Two-Way Voice Test”.
+That opens the Two-Way Voice Test screen with the Start test button.
+
+To START the test, tap Start test.
 
 When the voice finishes and it beeps, clearly say: “CORRECT CSID”.
 
 Then tap Done and tell me what happens.
 
-CSID (if asked): ${csid}`;
-          },
-          ui: {
-            issues: [
-              { id: "in_call_or_waiting_no_voice_kicks_out", label: "In Call / Waiting for Status (no voice), then it kicks out" },
-              { id: "not_ready_for_test", label: "Not ready for test" },
-              { id: "failed_to_initialize", label: "Failed to initialize" },
-              { id: "dialing_then_ends", label: "Dialing then ends/hangs up" },
-              { id: "waiting_for_status", label: "Stuck on waiting for status" },
-              { id: "operator_never_spoke", label: "Operator never spoke" }
-            ]
-          },
-          intents: [
-            { id: "in_call_or_waiting_no_voice_kicks_out", response: () => escalate("Two-way test: In Call/Waiting for Status (no voice) then kick out") },
-            { id: "not_ready_for_test", response: () => `Tap Back twice → Monitoring and Cellular → Advanced Cellular Status → Reset Cellular Module. Then try the Two-Way Voice Test again. If it still says “Not ready for test,” reboot:\n\n${rebootForPanel(state.panel_type)}` },
-            { id: "failed_to_initialize", response: "Tap Back. Turn ON Test Mode for 10 seconds, then turn it OFF. Try the Two-Way Voice Test again." },
-            { id: "dialing_then_ends", response: "Tap Back twice → Monitoring and Cellular → Advanced Cellular Status → Reset Cellular Module. Then try the Two-Way Voice Test again." },
-            { id: "waiting_for_status", response: () => `If it stays stuck for a while, reboot:\n\n${rebootForPanel(state.panel_type)}\n\nAfter reboot, try the Two-Way Voice Test again.` },
-            { id: "operator_never_spoke", response: "Tap Back twice → Monitoring and Cellular → Advanced Cellular Status → Reset Cellular Module. Then try the Two-Way Voice Test again." }
+CSID (if asked): ${state.csid || "{{csid}}"}`,
+          ui:{issues:[
+            {id:"in_call_or_waiting_no_voice_kicks_out",label:"In Call / Waiting for Status (no voice), then it kicks out"},
+            {id:"not_ready_for_test",label:"Not ready for test"},
+            {id:"failed_to_initialize",label:"Failed to initialize"},
+            {id:"dialing_then_ends",label:"Dialing then ends/hangs up"},
+            {id:"waiting_for_status",label:"Stuck on waiting for status"},
+            {id:"operator_never_spoke",label:"Operator never spoke"}
+          ]},
+          intents:[
+            {id:"in_call_or_waiting_no_voice_kicks_out",response:() => escalate("Two-way test: In Call/Waiting for Status (no voice) then kick out")},
+            {id:"not_ready_for_test",response:() => `Tap Back twice → Monitoring and Cellular → Advanced Cellular Status → Reset Cellular Module. Then try the Two-Way Voice Test again. If it still says “Not ready for test,” reboot:\n\n${rebootForPanel(state.panel_type)}`},
+            {id:"failed_to_initialize",response:"Tap Back. Turn ON Test Mode for 10 seconds, then turn it OFF. Try the Two-Way Voice Test again."},
+            {id:"dialing_then_ends",response:"Tap Back twice → Monitoring and Cellular → Advanced Cellular Status → Reset Cellular Module. Then try the Two-Way Voice Test again."},
+            {id:"waiting_for_status",response:() => `If it stays stuck for a while, reboot:\n\n${rebootForPanel(state.panel_type)}\n\nAfter reboot, try the Two-Way Voice Test again.`},
+            {id:"operator_never_spoke",response:"Tap Back twice → Monitoring and Cellular → Advanced Cellular Status → Reset Cellular Module. Then try the Two-Way Voice Test again."}
           ]
         },
         {
-          id: "step_4",
-          name: "Set up PIN (and Users menu)",
-          message: () => `Set up your PIN:
+          id:"step_4",
+          name:"Set up PIN",
+          screen_sequence:["twoway_voice_back","system_testing_sounder","system_testing_back","installer_toolbox_back","support_users","users","customer_user","pin_entry"],
+          message:() => `Set up your PIN:
 
-1) Tap the 3 dots (bottom-right)
-2) Tap Users
-3) If it asks for a code, enter 2203
-4) Tap your name
-5) Tap the existing PIN
-6) Type your new 4-digit PIN → tap Save
-7) Re-enter the new PIN → tap Save
+You should still be on the Two-Way Voice Test screen.
+
+1) Tap Back once to return to System Testing
+2) Make sure Sounder is OFF / gray
+3) Tap Back twice
+4) Tap Users
+5) Tap your name
+6) Tap the existing PIN
+7) Type your new 4-digit PIN → tap Save
+8) Re-enter the new PIN → tap Save
 
 When that’s done, tap Done.`,
-          ui: {
-            issues: [
-              { id: "cant_find_users", label: "I can’t find Users" },
-              { id: "2203_didnt_work_here", label: "2203 didn’t work here" },
-              { id: "pin_save_failed", label: "It won’t let me save / error saving PIN" },
-              { id: "updating_user_pin_stuck", label: "Stuck on updating user PIN" }
-            ]
-          },
-          intents: [
-            { id: "cant_find_users", response: "That’s okay. Tap Back until you’re on the Home Screen, then tap the 3 dots (bottom-right) and select Users." },
-            { id: "2203_didnt_work_here", response: () => escalate("2203 failed at Users/PIN screen") },
-            { id: "pin_save_failed", response: "Try the PIN again. If it still fails, back out, reboot the panel, then try again." },
-            { id: "updating_user_pin_stuck", response: "Tap “Stop”, then tap the X. Your new PIN should still be saved." }
+          ui:{issues:[
+            {id:"cant_find_users",label:"I can’t find Users"},
+            {id:"2203_didnt_work_here",label:"2203 didn’t work here"},
+            {id:"pin_save_failed",label:"It won’t let me save / error saving PIN"},
+            {id:"updating_user_pin_stuck",label:"Stuck on updating user PIN"}
+          ]},
+          intents:[
+            {id:"cant_find_users",response:"That’s okay. Tap Back until you’re on the Home Screen, then tap the 3 dots (bottom-right) and select Users."},
+            {id:"2203_didnt_work_here",response:() => escalate("2203 failed at Users/PIN screen")},
+            {id:"pin_save_failed",response:"Try the PIN again. If it still fails, back out, reboot the panel, then try again."},
+            {id:"updating_user_pin_stuck",response:"Tap “Stop”, then tap the X. Your new PIN should still be saved."}
           ]
         },
         {
-          id: "step_5",
-          name: "Panic + Arming test",
-          message: () => `Now we’ll test Panic and Arming.
+          id:"step_5",
+          name:"Panic + Arming test",
+          screen_sequence:["home_plus","panic_menu","panic_alarm","recent_alarms","home_arm","drag_to_arm","arming_countdown","armed_stay","disarm_drag"],
+          message:() => `Now we’ll test Panic and Arming.
 
 Panic test:
 1) Tap the white plus/cross icon at the bottom
@@ -462,82 +897,78 @@ Arming test:
 3) Disarm by dragging down and entering your 4-digit PIN
 
 When finished, tap Done.`,
-          ui: {
-            issues: [
-              { id: "will_this_sound", label: "Will this be loud / sound the alarm?" },
-              { id: "duress_not_working", label: "2580 isn’t working to disarm" },
-              { id: "not_ready_to_arm", label: "System says not ready to arm" }
-            ]
-          },
-          intents: [
-            { id: "will_this_sound", response: "If the Sounder is off, it should not be loud." },
-            { id: "duress_not_working", response: "That’s okay — just use your personal PIN to disarm for now." },
-            { id: "not_ready_to_arm", response: "That’s okay — you can tap “Arm Anyway” and enter your PIN. We can fix the warning later." }
+          ui:{issues:[
+            {id:"will_this_sound",label:"Will this be loud / sound the alarm?"},
+            {id:"duress_not_working",label:"2580 isn’t working to disarm"},
+            {id:"not_ready_to_arm",label:"System says not ready to arm"}
+          ]},
+          intents:[
+            {id:"will_this_sound",response:"If the Sounder is off, it should not be loud."},
+            {id:"duress_not_working",response:"That’s okay — just use your personal PIN to disarm for now."},
+            {id:"not_ready_to_arm",response:"That’s okay — you can tap “Arm Anyway” and enter your PIN. We can fix the warning later."}
           ]
         },
         {
-          id: "step_6",
-          name: "Emergency contact + verbal password",
-          message: () => `Last step — choose what you want to do next:
+          id:"step_6",
+          name:"Emergency contact + verbal password",
+          screen_sequence:["users","customer_user"],
+          message:() => `Last step — choose what you want to do next:
 • Add Emergency Contact
 • Set Verbal Password
 • App Invite
 
 Or tap Done if you’re finished.`,
-          ui: {
-            issues: [
-              { id: "collect_emergency_contact", label: "Add emergency contact" },
-              { id: "verbal_password_info", label: "What is a verbal password?" },
-              { id: "app_invite_instructions", label: "Help with app invite" }
-            ]
-          },
-          intents: [
-            { id: "collect_emergency_contact", response: "Please share the first name, last name, and phone number for an emergency contact." },
-            { id: "verbal_password_info", response: "A verbal password is a word or number you say if we call during an alarm to confirm you’re safe." },
-            { id: "app_invite_instructions", response: "Tap the 3 dots (bottom-right) → Users → select your name. Enter your phone number and email address, then tap “Send invitation.”" }
+          ui:{issues:[
+            {id:"collect_emergency_contact",label:"Add emergency contact"},
+            {id:"verbal_password_info",label:"What is a verbal password?"},
+            {id:"app_invite_instructions",label:"Help with app invite"}
+          ]},
+          intents:[
+            {id:"collect_emergency_contact",response:"Please share the first name, last name, and phone number for an emergency contact."},
+            {id:"verbal_password_info",response:"A verbal password is a word or number you say if we call during an alarm to confirm you’re safe."},
+            {id:"app_invite_instructions",response:"Tap the 3 dots (bottom-right) → Users → select your name. Enter your phone number and email address, then tap “Send invitation.”"}
           ]
         }
       ]
     };
 
-    function smartHubReboot2Min() {
+    function smartHubReboot2Min(){
       return `Slide the panel straight up off the wall. Remove the battery from the back, wait 10 seconds, then put the battery back in and place the panel back on the wall. It should say “Your system is rebooting.” This usually takes about 2 minutes. Let me know when it finishes and you’re back on the main screen.`;
     }
-    function skyControlReboot5to10() {
+    function skyControlReboot5to10(){
       return `Tap the Home button (bottom-right) → tap the 3 dots → General → enter 2203 (or your code if you have one) → scroll down → tap Reboot. You should see “Connecting Services.” This reboot usually takes 5–10 minutes. Let me know when it finishes and you’re back on the main screen.`;
     }
-    function rebootForPanel(panelType) { return (panelType === "skycontrol") ? skyControlReboot5to10() : smartHubReboot2Min(); }
-    function powerCycleForPanel(panelType) {
-      if (panelType === "skycontrol") return `Please do a reboot (do not slide the panel off the wall):\n\n${skyControlReboot5to10()}`;
+    function rebootForPanel(panelType){ return panelType === "skycontrol" ? skyControlReboot5to10() : smartHubReboot2Min(); }
+    function powerCycleForPanel(panelType){
+      if(panelType === "skycontrol") return `Please do a reboot (do not slide the panel off the wall):\n\n${skyControlReboot5to10()}`;
       return `Slide the panel straight up off the wall. Make sure the battery is fully seated on the back of the panel. Place the panel back on the wall and make sure it clicks into place.`;
     }
-
-    function homeReturnInstruction(panelType) {
-      if (panelType === "skycontrol") return "Tap the House/Home button at the bottom-right.";
-      return "Tap the X inside of the shield in the bottom-left.";
+    function homeReturnInstruction(panelType){
+      return panelType === "skycontrol" ? "Tap the House/Home button at the bottom-right." : "Tap the X inside of the shield in the bottom-left.";
     }
 
-    function lostTextForStep(stepId) {
+    function lostTextForStep(stepId){
       const home = homeReturnInstruction(state.panel_type);
-      if (stepId === "step_1") return `If you’re on the wrong screen:\n\n1) ${home}\n\nOnce you’re back on the main screen, check the date/time (top-left), then tap Done here.`;
-      if (stepId === "step_2") return `If you’re on the wrong screen:\n\n1) ${home}\n2) Tap the 3 dots\n3) Tap Software Version\n4) Enter 2203\n\nOnce you’re in, continue with registration, then tap Done here.`;
-      if (stepId === "step_3") return `If you’re on the wrong screen:\n\n1) ${home}\n2) Tap the 3 dots\n3) Tap Software Version\n4) Enter 2203\n5) Tap System Testing\n6) Scroll down and tap Two-Way Voice Test\n7) Tap Two-Way Voice Test again (or tap Start Test)\n8) When it beeps, say: “CORRECT CSID”\n\nThen tap Done here.`;
-      if (stepId === "step_4") return `If you’re on the wrong screen:\n\n1) ${home}\n2) Tap the 3 dots\n3) Tap Software Version\n4) Enter 2203\n5) Tap System Testing\n6) Make sure the Sounder switch is gray/black (OFF)\n7) Tap Back twice\n8) Tap Users\n\nThen continue with the PIN steps, and tap Done here when finished.`;
-      if (stepId === "step_5") return `If you’re on the wrong screen:\n\n1) ${home}\n2) Tap the white plus sign / cross symbol at the bottom\n\nThen continue the Panic test and tap Done here when finished.`;
+      if(stepId === "step_1") return `If you’re on the wrong screen:\n\n1) ${home}\n\nOnce you’re back on the main screen, check the date/time (top-left), then tap Done here.`;
+      if(stepId === "step_2") return `If you’re on the wrong screen:\n\n1) ${home}\n2) Tap the 3 dots\n3) Tap Software Version\n4) Enter 2203\n\nOnce you’re in, continue with registration, then tap Done here.`;
+      if(stepId === "step_3") return `If you’re on the wrong screen:\n\n1) ${home}\n2) Tap the 3 dots\n3) Tap Software Version\n4) Enter 2203\n5) Tap System Testing\n6) Scroll down and tap Two-Way Voice Test\n7) Tap Two-Way Voice Test again (or tap Start Test)\n8) When it beeps, say: “CORRECT CSID”\n\nThen tap Done here.`;
+      if(stepId === "step_4") return `If you’re on the wrong screen:\n\n1) ${home}\n2) Tap the 3 dots\n3) Tap Users\n\nThen continue with the PIN steps, and tap Done here when finished.`;
+      if(stepId === "step_5") return `If you’re on the wrong screen:\n\n1) ${home}\n2) Tap the white plus sign / cross symbol at the bottom\n\nThen continue the Panic test and tap Done here when finished.`;
       return `If you’re on the wrong screen:\n\n1) ${home}\n2) Tap the 3 dots → Users\n\nThen continue and tap Done here when finished.`;
     }
 
-    function defaultState() {
+    function defaultState(){
       return {
-        current_step_id: "step_1",
-        panel_type: "",
-        csid: "",
-        registration_code: "",
-        service_number: "",
-        history: ["step_1"],
-        return_step_id: "step_1",
-        return_step_message: "",
-        pending_return_to_step_on_done: false
+        current_step_id:"step_1",
+        panel_type:"",
+        csid:"",
+        registration_code:"",
+        service_number:"",
+        history:["step_1"],
+        return_step_id:"step_1",
+        return_step_message:"",
+        pending_return_to_step_on_done:false,
+        pending_return_reason:""
       };
     }
 
@@ -557,159 +988,210 @@ Or tap Done if you’re finished.`,
     const panelSelect = document.getElementById("panelSelect");
     const overlay = document.getElementById("overlay");
     const csidOnlyText = document.getElementById("csidOnlyText");
-
     const escalationTextEl = document.getElementById("escalationText");
-    escalationTextEl.value = escalationDefault;
-
     const makeLinkBtn = document.getElementById("makeLinkBtn");
     const copyLinkBtn = document.getElementById("copyLinkBtn");
     const shareLinkInput = document.getElementById("shareLink");
+    const panelScreenEl = document.getElementById("panelScreen");
+    const screenTitleEl = document.getElementById("screenTitle");
+    const screenSubEl = document.getElementById("screenSub");
+    const screenChecklistEl = document.getElementById("screenChecklist");
+    const screenDotsEl = document.getElementById("screenDots");
+    const progressLabelEl = document.getElementById("progressLabel");
+    const progressNameEl = document.getElementById("progressName");
+    const progressFillEl = document.getElementById("progressFill");
+    const doneBtn = document.getElementById("doneBtn");
+    const issuesBtn = document.getElementById("issuesBtn");
+    const lostBtn = document.getElementById("lostBtn");
+    const triedFixBtn = document.getElementById("triedFixBtn");
+    const tempReturnRow = document.getElementById("tempReturnRow");
 
-    function getStep(stepId) { return FLOW.steps.find(s => s.id === stepId); }
-    function setStatus(msg) { statusLine.textContent = msg || ""; }
-    function escapeHtml(s) {
-      return (s||"").replace(/[&<>"']/g, (m)=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[m]));
-    }
-    function showInfo(msg) { helperPanel.innerHTML = `<div class="ok">${escapeHtml(msg).replace(/\n/g,"<br>")}</div>`; }
-    function showAlert(msg) { helperPanel.innerHTML = `<div class="alert">${escapeHtml(msg).replace(/\n/g,"<br>")}</div>`; }
-    function clearHelper() { helperPanel.innerHTML = ""; }
-    function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-    function loadState() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch { return null; } }
-    function setOverlay(open) { overlay.classList.toggle("open", !!open); }
-    function withLoading(fn, delayMs = 250) {
+    escalationTextEl.value = escalationDefault;
+
+    function getStep(stepId){ return FLOW.steps.find(s => s.id === stepId); }
+    function setStatus(msg){ statusLine.textContent = msg || ""; }
+    function escapeHtml(s){ return (s || "").replace(/[&<>"']/g, m => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[m])); }
+    function showInfo(msg){ helperPanel.innerHTML = `<div class="ok">${escapeHtml(msg).replace(/\n/g,"<br>")}</div>`; }
+    function showAlert(msg){ helperPanel.innerHTML = `<div class="alert">${escapeHtml(msg).replace(/\n/g,"<br>")}</div>`; }
+    function clearHelper(){ helperPanel.innerHTML = ""; }
+    function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    function loadState(){ try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch { return null; } }
+    function setOverlay(open){ overlay.classList.toggle("open", !!open); }
+    function withLoading(fn, delayMs = 220){
       setOverlay(true);
       setTimeout(() => { try { fn(); } finally { setOverlay(false); } }, delayMs);
     }
-
-    function flashMessageBox() {
+    function flashMessageBox(){
       bigWrap.classList.remove("flash");
       void bigWrap.offsetWidth;
       bigWrap.classList.add("flash");
     }
-
-    function setBotMessage(text) {
+    function setBotMessage(text){
       botMessageEl.textContent = text;
       flashMessageBox();
       bigWrap.scrollTop = 0;
     }
-
-    function interpolateStepMessage(step) {
+    function interpolateStepMessage(step){
       let msg = typeof step.message === "function" ? step.message() : step.message;
       msg = msg.replace(/\{\{csid\}\}/g, state.csid || "{{csid}}");
       msg = msg.replace(/\{\{registration_code\}\}/g, state.registration_code || "{{registration_code}}");
       return msg;
     }
-
-    function gotoStep(stepId) {
+    function gotoStep(stepId){
       state.current_step_id = stepId;
       state.history.push(stepId);
+      currentScreenIndex = 0;
       saveState();
       render();
-      flashMessageBox();
     }
-
-    function goBackOneStep() {
-      if (state.history.length <= 1) return;
+    function goBackOneStep(){
+      if(state.history.length <= 1) return;
       state.history.pop();
       state.current_step_id = state.history[state.history.length - 1];
+      currentScreenIndex = 0;
       saveState();
       render();
-      flashMessageBox();
     }
-
-    function escalate(reason) {
+    function escalate(reason){
       const esc = escalationTextEl.value || escalationDefault;
       setStatus(`Help requested: ${reason}`);
       return esc;
     }
 
-    function openTempMessageThenReturnOnDone(tempMessage) {
+    function renderTempReturnState(){
+      const tempActive = !!state.pending_return_to_step_on_done;
+      doneBtn.style.display = tempActive ? "none" : "";
+      tempReturnRow.style.display = tempActive ? "flex" : "none";
+
+      if(state.pending_return_reason === "lost") triedFixBtn.textContent = "✅ I found it";
+      else if(state.pending_return_reason === "issue") triedFixBtn.textContent = "✅ I tried that";
+      else triedFixBtn.textContent = "✅ Back to step";
+    }
+
+    function openTempMessageThenReturnOnDone(tempMessage, reason = "issue"){
       const step = getStep(state.current_step_id);
       state.return_step_id = state.current_step_id;
       state.return_step_message = step ? interpolateStepMessage(step) : "";
       state.pending_return_to_step_on_done = true;
+      state.pending_return_reason = reason;
+      saveState();
+      setBotMessage(tempMessage);
+      showInfo("After you try that, tap the button below to return to the step.");
+      renderTempReturnState();
+    }
+
+    function returnFromTemporaryHelp(){
+      const step = getStep(state.return_step_id || state.current_step_id);
+      const restore = state.return_step_message || (step ? interpolateStepMessage(step) : "");
+
+      state.pending_return_to_step_on_done = false;
+      state.pending_return_reason = "";
+      state.return_step_message = "";
       saveState();
 
-      setBotMessage(tempMessage);
-      showInfo("After you try that, tap Done to return to the step.");
+      setBotMessage(restore || (step ? interpolateStepMessage(step) : botMessageEl.textContent));
+      showInfo("Back to the step. Continue where you left off, then tap Done when finished.");
+      renderTempReturnState();
     }
 
-    function handleIntent(intentId) {
+    function handleIntent(intentId){
       const step = getStep(state.current_step_id);
       const intent = step?.intents?.find(i => i.id === intentId);
-      if (!intent) { showAlert("No message found for that option."); return; }
+      if(!intent){ showAlert("No message found for that option."); return; }
 
       let response = intent.response;
-      if (typeof response === "function") response = response();
-
-      openTempMessageThenReturnOnDone(response);
+      if(typeof response === "function") response = response();
+      openTempMessageThenReturnOnDone(response, "issue");
     }
 
-    function handleLost() {
-      const txt = lostTextForStep(state.current_step_id);
-      openTempMessageThenReturnOnDone(txt);
+    function handleLost(){
+      openTempMessageThenReturnOnDone(lostTextForStep(state.current_step_id), "lost");
     }
 
-    function encodeB64Url(str) {
-      return btoa(unescape(encodeURIComponent(str)))
-        .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+    function encodeB64Url(str){
+      return btoa(unescape(encodeURIComponent(str))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/g,"");
     }
-    function decodeB64Url(b64url) {
-      const b64 = b64url.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((b64url.length + 3) % 4);
+    function decodeB64Url(b64url){
+      const b64 = b64url.replace(/-/g,"+").replace(/_/g,"/") + "===".slice((b64url.length + 3) % 4);
       return decodeURIComponent(escape(atob(b64)));
     }
-    function buildShareLinkFromState() {
+    function buildShareLinkFromState(){
       const payload = {
-        panel: state.panel_type || "",
-        csid: state.csid || "",
-        reg: state.registration_code || "",
-        service: state.service_number || ""
+        panel:state.panel_type || "",
+        csid:state.csid || "",
+        reg:state.registration_code || "",
+        service:state.service_number || ""
       };
-      const packed = encodeB64Url(JSON.stringify(payload));
-      const base = `${location.origin}${location.pathname}`;
-      return `${base}#prefill=${packed}`;
+      return `${location.origin}${location.pathname}#prefill=${encodeB64Url(JSON.stringify(payload))}`;
     }
 
-    function applyCustomerMode() {
+    function applyCustomerMode(){
       isCustomerMode = true;
       document.body.classList.add("customerMode");
       panelSelect.disabled = true;
       csidInput.readOnly = true;
       regInput.readOnly = true;
       serviceInput.readOnly = true;
-
       state.current_step_id = "step_1";
       state.history = ["step_1"];
+      currentScreenIndex = 0;
       saveState();
     }
 
-    function applyPrefill(payload) {
-      if (payload.panel) state.panel_type = String(payload.panel).toLowerCase();
-      if (payload.csid) state.csid = String(payload.csid).trim();
-      if (payload.reg) state.registration_code = String(payload.reg).trim();
-      if (payload.service) state.service_number = String(payload.service).trim();
-      state.current_step_id = "step_1";
-      state.history = ["step_1"];
-      saveState();
+    function applyPrefill(payload){
+      if(payload.panel) state.panel_type = String(payload.panel).toLowerCase();
+      if(payload.csid) state.csid = String(payload.csid).trim();
+      if(payload.reg) state.registration_code = String(payload.reg).trim();
+      if(payload.service) state.service_number = String(payload.service).trim();
       applyCustomerMode();
     }
 
-    function tryPrefillFromUrl() {
+    function tryPrefillFromUrl(){
       const hash = location.hash || "";
       const m = hash.match(/prefill=([^&]+)/);
-      if (m && m[1]) {
-        try {
-          const payload = JSON.parse(decodeB64Url(m[1]));
-          applyPrefill(payload);
+      if(m && m[1]){
+        try{
+          applyPrefill(JSON.parse(decodeB64Url(m[1])));
           return true;
         } catch {}
       }
       return false;
     }
 
-    function render() {
+    function renderProgress(step){
+      const idx = Math.max(0, FLOW.steps.findIndex(s => s.id === step.id));
+      progressLabelEl.textContent = `Step ${idx + 1} of ${FLOW.steps.length}`;
+      progressNameEl.textContent = step.name;
+      progressFillEl.style.width = `${((idx + 1) / FLOW.steps.length) * 100}%`;
+    }
+
+    function renderPanelPreview(step){
+      const seq = step?.screen_sequence?.length ? step.screen_sequence : ["home_check"];
+
+      if(currentScreenIndex >= seq.length) currentScreenIndex = seq.length - 1;
+      if(currentScreenIndex < 0) currentScreenIndex = 0;
+
+      const screen = SCREEN_MAP[seq[currentScreenIndex]] || SCREEN_MAP.home_check;
+
+      panelScreenEl.className = "panelScreen";
+      panelScreenEl.innerHTML = screen.render();
+      screenTitleEl.textContent = screen.title;
+      screenSubEl.textContent = `${currentScreenIndex + 1} of ${seq.length}: ${screen.subtitle}`;
+      screenChecklistEl.innerHTML = screen.checks
+        .map(c => `<div class="checkItem"><div class="checkIcon">✓</div><div>${escapeHtml(c)}</div></div>`)
+        .join("");
+      screenDotsEl.innerHTML = seq
+        .map((_, i) => `<span class="screenDot ${i === currentScreenIndex ? "active" : ""}"></span>`)
+        .join("");
+
+      document.getElementById("prevScreenBtn").disabled = currentScreenIndex === 0;
+      document.getElementById("nextScreenBtn").disabled = currentScreenIndex >= seq.length - 1;
+    }
+
+    function render(){
       const step = getStep(state.current_step_id) || getStep("step_1");
-      if (!getStep(state.current_step_id)) {
+
+      if(!getStep(state.current_step_id)){
         state.current_step_id = "step_1";
         state.history = ["step_1"];
         saveState();
@@ -720,33 +1202,29 @@ Or tap Done if you’re finished.`,
         : "Not set";
 
       panelPill.textContent = panelLabel;
-      stepPill.textContent = `${step?.id || "—"} • ${step?.name || ""}`;
-
+      stepPill.textContent = `${step.id.replace("step_","")} • ${step.name}`;
       panelSelect.value = state.panel_type || "";
       csidInput.value = state.csid || "";
       regInput.value = state.registration_code || "";
       serviceInput.value = state.service_number || "";
-
       csidOnlyText.textContent = state.csid ? state.csid : "—";
 
-      if (!state.pending_return_to_step_on_done) {
-        const msg = step ? interpolateStepMessage(step) : "Step not found.";
-        setBotMessage(msg);
-      }
+      renderProgress(step);
+      renderPanelPreview(step);
+
+      if(!state.pending_return_to_step_on_done) setBotMessage(interpolateStepMessage(step));
 
       buildIssuesMenu(step);
+      renderTempReturnState();
 
-      if (isCustomerMode) {
-        clearHelper();
-      } else {
-        if (!state.panel_type) setStatus("Agent: choose panel type on the right before generating a customer link.");
-        else setStatus("");
-      }
+      if(isCustomerMode) clearHelper();
+      else if(!state.panel_type) setStatus("Agent: choose panel type on the right before generating a customer link.");
+      else setStatus("");
     }
 
-    function buildIssuesMenu(step) {
+    function buildIssuesMenu(step){
       issuesMenuEl.innerHTML = "";
-      if (!step?.ui?.issues?.length) return;
+      if(!step?.ui?.issues?.length) return;
 
       const title = document.createElement("div");
       title.className = "muted small";
@@ -765,51 +1243,58 @@ Or tap Done if you’re finished.`,
       });
     }
 
-    document.getElementById("doneBtn").onclick = () => withLoading(() => {
-      if (state.pending_return_to_step_on_done) {
-        const step = getStep(state.return_step_id || state.current_step_id);
-        const restore = state.return_step_message || (step ? interpolateStepMessage(step) : "");
-        state.pending_return_to_step_on_done = false;
-        saveState();
+    doneBtn.onclick = () => withLoading(() => {
+      const idx = FLOW.steps.findIndex(s => s.id === state.current_step_id);
 
-        setBotMessage(restore || (step ? interpolateStepMessage(step) : botMessageEl.textContent));
-        showInfo("Back to the step. When you finish the step, tap Done again to continue.");
+      if(idx < 0){
+        state.current_step_id = "step_1";
+        state.history = ["step_1"];
+        saveState();
+        render();
         return;
       }
 
-      const idx = FLOW.steps.findIndex(s => s.id === state.current_step_id);
-      if (idx < 0) { state.current_step_id = "step_1"; state.history = ["step_1"]; saveState(); render(); return; }
       const next = FLOW.steps[idx + 1];
-      if (!next) { showInfo("All set — you’re finished."); return; }
+      if(!next){
+        showInfo("All set — you’re finished.");
+        return;
+      }
+
       gotoStep(next.id);
     }, 200);
 
-    document.getElementById("issuesBtn").onclick = () => {
-      const step = getStep(state.current_step_id);
-      if (!step) return;
-      issuesMenuEl.classList.toggle("open");
-    };
-
-    document.getElementById("lostBtn").onclick = () => withLoading(() => {
+    triedFixBtn.onclick = () => withLoading(() => returnFromTemporaryHelp(), 200);
+    issuesBtn.onclick = () => issuesMenuEl.classList.toggle("open");
+    lostBtn.onclick = () => withLoading(() => {
       handleLost();
       issuesMenuEl.classList.remove("open");
     }, 200);
 
     document.getElementById("escalateBtn").onclick = () => withLoading(() => {
       state.pending_return_to_step_on_done = false;
+      state.pending_return_reason = "";
       saveState();
       setBotMessage("To chat with a representative, text (385) 425-0752.");
       showAlert("If you already texted and want to keep going, continue with the steps above.");
+      renderTempReturnState();
     }, 200);
 
     document.getElementById("copyBtn").onclick = async () => {
-      try { await navigator.clipboard.writeText(botMessageEl.textContent); setStatus("Copied."); }
-      catch { setStatus("Copy failed (browser permissions)."); }
+      try{
+        await navigator.clipboard.writeText(botMessageEl.textContent);
+        setStatus("Copied.");
+      } catch {
+        setStatus("Copy failed (browser permissions).");
+      }
     };
 
     document.getElementById("copyEscBtn").onclick = async () => {
-      try { await navigator.clipboard.writeText(escalationTextEl.value); setStatus("Copied escalation message."); }
-      catch { setStatus("Copy failed (browser permissions)."); }
+      try{
+        await navigator.clipboard.writeText(escalationTextEl.value);
+        setStatus("Copied escalation message.");
+      } catch {
+        setStatus("Copy failed (browser permissions).");
+      }
     };
 
     document.getElementById("backBtn").onclick = () => withLoading(() => goBackOneStep(), 200);
@@ -818,40 +1303,59 @@ Or tap Done if you’re finished.`,
       localStorage.removeItem(STORAGE_KEY);
       state = defaultState();
       isCustomerMode = false;
+      currentScreenIndex = 0;
       document.body.classList.remove("customerMode");
-      state.pending_return_to_step_on_done = false;
       saveState();
       render();
       showInfo("Reset complete.");
     }, 200);
 
-    panelSelect.onchange = (e) => { state.panel_type = e.target.value; saveState(); render(); };
-    csidInput.oninput = (e) => { state.csid = e.target.value.trim(); saveState(); render(); };
-    regInput.oninput = (e) => { state.registration_code = e.target.value.trim(); saveState(); render(); };
-    serviceInput.oninput = (e) => { state.service_number = e.target.value.trim(); saveState(); };
+    panelSelect.onchange = e => { state.panel_type = e.target.value; saveState(); render(); };
+    csidInput.oninput = e => { state.csid = e.target.value.trim(); saveState(); render(); };
+    regInput.oninput = e => { state.registration_code = e.target.value.trim(); saveState(); render(); };
+    serviceInput.oninput = e => { state.service_number = e.target.value.trim(); saveState(); };
 
     makeLinkBtn.onclick = () => {
-      const url = buildShareLinkFromState();
-      shareLinkInput.value = url;
+      shareLinkInput.value = buildShareLinkFromState();
       copyLinkBtn.disabled = false;
       setStatus("Link generated.");
     };
 
     copyLinkBtn.onclick = async () => {
-      try { await navigator.clipboard.writeText(shareLinkInput.value); setStatus("Link copied."); }
-      catch { setStatus("Copy failed (browser permissions)."); }
+      try{
+        await navigator.clipboard.writeText(shareLinkInput.value);
+        setStatus("Link copied.");
+      } catch {
+        setStatus("Copy failed (browser permissions).");
+      }
+    };
+
+    document.getElementById("prevScreenBtn").onclick = () => {
+      currentScreenIndex--;
+      renderPanelPreview(getStep(state.current_step_id));
+    };
+
+    document.getElementById("nextScreenBtn").onclick = () => {
+      currentScreenIndex++;
+      renderPanelPreview(getStep(state.current_step_id));
+    };
+
+    document.getElementById("toggleAgentBtn").onclick = () => {
+      const right = document.getElementById("rightCard");
+      right.classList.toggle("agentCollapsed");
+      document.getElementById("toggleAgentBtn").textContent = right.classList.contains("agentCollapsed") ? "Expand" : "Collapse";
     };
 
     const wasPrefilled = tryPrefillFromUrl();
-    if (!wasPrefilled) {
-      if (!state.current_step_id || !getStep(state.current_step_id)) {
-        state.current_step_id = "step_1";
-        state.history = ["step_1"];
-        saveState();
-      }
+
+    if(!wasPrefilled && (!state.current_step_id || !getStep(state.current_step_id))){
+      state.current_step_id = "step_1";
+      state.history = ["step_1"];
+      saveState();
     }
 
     state.pending_return_to_step_on_done = false;
+    state.pending_return_reason = "";
     saveState();
     render();
   </script>
